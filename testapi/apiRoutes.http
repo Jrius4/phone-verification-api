@@ -1,0 +1,31 @@
+## post phoneNumber
+POST http://localhost:3459/api/auth/send-otp
+Content-Type: application/json
+
+{
+  "phoneNumber": "+256779571619"
+}
+
+####
+
+### resend-otp
+
+POST http://localhost:3459/api/auth/resend-otp
+Content-Type: application/json
+
+{
+  "phoneNumber": "+256779571619"
+}
+
+### verify-otp
+POST http://localhost:3459/api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "otp": "631971",
+  "phoneNumber": "+256779571619"
+}
+
+#####
+## eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZU51bWJlciI6IisyNTY3Nzk1NzE2MTkiLCJ2ZXJpZmllZCI6dHJ1ZSwiaWF0IjoxNzU2NDk2Njg1LCJleHAiOjE3NTY1ODMwODV9.7NhZGb1gbiiVNWBPd4aBntONE8xKCPQwy7_tbJtLywE
+###

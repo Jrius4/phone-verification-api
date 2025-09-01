@@ -21,6 +21,13 @@ class SmsService {
         return this.sendOtpMock(phoneNumber, message);
       }
 
+       // Check if number is verified (for trial accounts)
+        if (process.env.TWILIO_ACCOUNT_SID.includes('AC') && 
+            process.env.TWILIO_ACCOUNT_SID.endsWith('trial')) {
+        console.log('Trial account detected - using mock SMS');
+        return this.sendOtpMock(phoneNumber, message);
+        }
+
       const result = await this.client.messages.create({
         body: message,
         from: process.env.TWILIO_PHONE_NUMBER,
