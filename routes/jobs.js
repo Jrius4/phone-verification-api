@@ -49,7 +49,9 @@ router.post('/:id/accept', async (req, res) => {
     req.io?.emit?.('job:accepted', { id: job.id, driverId });
     req.io?.emit?.('job:updated', job.toObject());
     res.json(job);
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) { 
+    console.error({e,req,res});
+    res.status(400).json({ error: e.message }); }
 });
 
 /** POST /api/driver/jobs/:id/complete */

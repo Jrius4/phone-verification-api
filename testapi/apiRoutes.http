@@ -42,3 +42,9 @@ Content-Type: application/json
 
 ### get available jobs
 GET http://localhost:3459/api/driver/jobs?status=available
+
+####
+### get available jobs
+GET http://localhost:3459/api/driver/jobs/active?driverId=DRIVER_DEMO
+
+####
