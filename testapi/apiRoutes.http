@@ -29,3 +29,16 @@ Content-Type: application/json
 #####
 ## eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZU51bWJlciI6IisyNTY3Nzk1NzE2MTkiLCJ2ZXJpZmllZCI6dHJ1ZSwiaWF0IjoxNzU2NDk2Njg1LCJleHAiOjE3NTY1ODMwODV9.7NhZGb1gbiiVNWBPd4aBntONE8xKCPQwy7_tbJtLywE
 ###
+
+
+#### test driver
+# GET /api/driver/jobs?status=available → feeds AvailableJobsScreen
+# POST /api/driver/jobs/:id/accept → Accept Job; emits job:accepted + job:updated
+# GET /api/driver/jobs/active?driverId=DRIVER_DEMO → ActiveJobsScreen
+# POST /api/driver/jobs/:id/complete → triggers job:completed
+# DELETE /api/driver/jobs/:id → triggers job:removed
+# POST /api/driver/jobs → creates a new job and emits job:new
+# GET /api/driver/jobs/:id → fetch a specific job
+
+### get available jobs
+GET http://localhost:3459/api/driver/jobs?status=available

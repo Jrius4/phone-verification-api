@@ -8,6 +8,7 @@
     "seed:admin": "node seeders/adminSeeder.js",
     "seed:admin:force": "node seeders/adminSeeder.js --force",
     "seed:admin:quiet": "node seeders/adminSeeder.js --quiet",
+    "seed:jobs":"node seeders/driverJobSeeder.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -24,7 +25,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
     "path-to-regexp": "^6.2.0",
-    "twilio": "^5.8.2"
+    "socket.io": "^4.8.1",
+    "twilio": "^5.8.2",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
