@@ -10,10 +10,11 @@ function generateOtp() {
 
 exports.sendOtp = async (req, res) => {
   try {
+    
     const { phoneNumber } = req.body;
     const otp = generateOtp();
-    const expiryMinutes = parseInt(process.env.OTP_EXPIRY_MINUTES) || 10;
-    const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+    const expiryMinutes = parseInt(process.env.OTP_EXPIRY_MINUTES) || 3; // Default 10 minutes
+    const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);// Expiry time
 
     // Check if there's an existing unexpired OTP
     const existingOtp = await Otp.findOne({ 
@@ -31,7 +32,10 @@ exports.sendOtp = async (req, res) => {
 
     // Send SMS
     const message = `Your OTP is ${otp}. It is valid for ${expiryMinutes} minutes.`;
-    const smsResult = await smsService.sendSMS(phoneNumber, message);
+    console.log({message});
+
+    const smsResult = await smsService.sendEgoSms(phoneNumber, message);
+    
 
     if (!smsResult.success) {
       return res.status(500).json({

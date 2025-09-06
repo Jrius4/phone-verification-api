@@ -48,3 +48,82 @@ GET http://localhost:3459/api/driver/jobs?status=available
 GET http://localhost:3459/api/driver/jobs/active?driverId=DRIVER_DEMO
 
 ####
+
+
+###driver auth
+POST http://localhost:3459/api/auth/driver/start
+Content-Type: application/json
+
+{
+  "phoneNumber": "+256779571619"
+}
+####
+### all auth login
+POST http://localhost:3459/api/auth/user/login
+Content-Type: application/json
+
+{
+  "email": "moderator@fty.com",
+  "password": "moderator123"
+}
+
+####
+
+###driver auth
+POST http://localhost:3459/api/auth/driver/verify
+Content-Type: application/json
+
+{
+   "request_id": "68bc05c33ee08d9a0a247528",
+  "code": "790474"
+}
+####
+### send otp
+# POST http://localhost:3459/api/auth/send-otp
+# Content-Type: application/json
+
+# {
+#   "phoneNumber": "+256779571619"
+# }
+
+## 376580
+### verify otp
+POST http://localhost:3459/api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "otp": "761518",
+  "phoneNumber": "+256779571619"
+}
+########
+# #### {
+#   "success": true,
+#   "message": "Phone number verified successfully",
+#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZU51bWJlciI6IisyNTY3Nzk1NzE2MTkiLCJ2ZXJpZmllZCI6dHJ1ZSwiaWF0IjoxNzU3MTQ4NzAxLCJleHAiOjE3NTcyMzUxMDF9.pAPB-XMb2M17ZUEs6V8_N6m5Xfwrye9KSEXS5wM_Fww",
+#   "phoneNumber": "+256779571619"
+# }
+########
+
+#### TEST JOBS
+### get available jobs
+GET http://localhost:3459/api/driver/jobs?status=available
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjMDQ2N2M5NTljZjU0MWFlYmFhMjgiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcxNTI3NDAsImV4cCI6MTc1OTc0NDc0MH0.em7qvthTv-045-18X_aimCXNZtI8iLYqoTRTGhpC9_4
+####
+
+
+# ### list all drivers
+GET http://localhost:3459/api/drivers?page=1&limit=15&search=tege
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGI0NDY1Y2Q3YmMyNmJmZjQ3YmIyNmQiLCJyb2xlIjoidXNlciIsInN1Yk1vZGVsIjoiVXNlciIsImlhdCI6MTc1NzE4MTIyOCwiZXhwIjoxNzU5NzczMjI4fQ.3R_xMMafG1ixEhAUQNzNqjgsRimo1o8I1AcYkLrOdQk
+
+###
+
+### list delivery requests
+GET http://localhost:3459/api/drivers/requests
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGI0NDY1Y2Q3YmMyNmJmZjQ3YmIyNmQiLCJyb2xlIjoidXNlciIsInN1Yk1vZGVsIjoiVXNlciIsImlhdCI6MTc1NzE4MTIyOCwiZXhwIjoxNzU5NzczMjI4fQ.3R_xMMafG1ixEhAUQNzNqjgsRimo1o8I1AcYkLrOdQk
+
+###
+
+
+
+
+

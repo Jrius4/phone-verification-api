@@ -46,7 +46,7 @@ const driverRegistrationSchema = Joi.object({
     .pattern(/^\+[1-9]\d{1,14}$/)
     .required(),
   vehicleType: Joi.string()
-    .valid('motorcycle','tricycle','pickup','van','truck','refrigerated truck','other')
+    .valid('motorcycle', 'tricycle', 'pickup', 'van', 'truck', 'refrigerated truck', 'other')
     .required(),
   vehicleNumber: Joi.string()
     .pattern(/^[A-Z0-9\s-]+$/)
@@ -68,7 +68,6 @@ const driverUpdateSchema = Joi.object({
   status: Joi.string().valid('pending', 'active', 'deactivated', 'rejected')
 });
 
-
 const adminLoginSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required()
@@ -87,13 +86,30 @@ const changePasswordSchema = Joi.object({
   newPassword: Joi.string().min(6).required()
 });
 
+const placeSchema = Joi.object({
+  name: Joi.string().allow('', null),
+  address: Joi.string().allow('', null),
+  lat: Joi.number().required(),
+  lng: Joi.number().required(),
+});
+
+const requestSchema = Joi.object({
+  produceType: Joi.string().required(),
+  quantity: Joi.number().positive().required(),
+  unit: Joi.string().valid('Kg', 'Bags', 'Crates', 'Litres', 'Tonnes').default('Kg'),
+  pickup: placeSchema.required(),
+  dropoff: placeSchema.required(),
+  notes: Joi.string().allow('', null),
+});
+
 module.exports = {
   validateRequest,
   phoneSchema,
   verifyOtpSchema,
-    driverRegistrationSchema,
-    driverUpdateSchema,
-    adminLoginSchema,
-    adminRegisterSchema,
-    changePasswordSchema
+  driverRegistrationSchema,
+  driverUpdateSchema,
+  adminLoginSchema,
+  adminRegisterSchema,
+  changePasswordSchema,
+  requestSchema
 };

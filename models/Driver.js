@@ -117,15 +117,7 @@ const driverSchema = new mongoose.Schema({
 
 // Generate unique registration ID
 driverSchema.pre('save', async function(next) {
-//   if (this.isNew) {
-//     const year = new Date().getFullYear().toString().slice(-2);
-//     const month = (new Date().getMonth() + 1).toString().padStart(2, '0');
-//     // Count existing drivers to generate sequential ID registed this year current month
-//     const count = await mongoose.model('Driver').countDocuments({
-//       registrationId: new RegExp(`^FTY${year}${month}`)
-//     });
-//     this.registrationId = `FTY${year}${month}${(count + 1).toString().padStart(4, '0')}`;
-//   }
+
 
 if (this.isNew && !this.registrationId) {
     try {

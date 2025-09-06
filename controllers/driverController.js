@@ -1,6 +1,131 @@
 const Driver = require('../models/Driver');
 const Otp = require('../models/VerifyPhoneNumberOtp');
 const jwt = require('jsonwebtoken');
+const DeliveryRequest = require('../models/DeliveryRequest');
+const Quote = require('../models/Quote');
+
+
+
+exports.getDeliveryRequests = async (req, res) => {
+  const { page = 1, limit = 10, status } = req.query;
+  const filter = { driverId: req.user.id };
+  if (status) filter.status = status;
+  const requests = await DeliveryRequest.find(filter)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 });
+  const total = await DeliveryRequest.countDocuments(filter);
+  res.json({
+    success: true,
+    data: requests,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit),
+    totalRequests: total
+  });
+}
+
+exports.getAllDeliveryRequests = async (req, res) => {
+  const { page = 1, limit = 10, status } = req.query;
+  const filter = {};
+  if (status) filter.status = status;
+  const requests = await DeliveryRequest.find()
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 });
+  const total = await DeliveryRequest.countDocuments(filter);
+  res.json({
+    success: true,
+    data: requests,
+    page: parseInt(page),
+    totalPages: Math.ceil(total / limit),
+    totalRequests: total
+  });
+}
+
+
+exports.saveDeliverRequest = async (req, res) => {
+  try {
+    const payload = req.body;
+    const doc = await DeliveryRequest.create({ ...payload, buyerId: req.user._id });
+    res.status(201).json({ id: doc._id, status: doc.status });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+}
+
+exports.singleDeliverRequest = async (req, res) => {
+  const doc = await DeliveryRequest.findById(req.params.id).lean();
+  if (!doc) return res.status(404).json({ message: 'Not found' });
+  if (String(doc.buyerId) !== String(req.user._id)) return res.status(403).json({ message: 'Forbidden' });
+  const qCount = await Quote.countDocuments({ requestId: doc._id, status: { $in: ['pending', 'accepted'] } });
+  res.json({ ...doc, quotesCount: qCount });
+}
+
+exports.getQuotesDeliverRequest = async (req, res) => {
+  const doc = await DeliveryRequest.findById(req.params.id).lean();
+  if (!doc) return res.status(404).json({ message: 'Not found' });
+  if (String(doc.buyerId) !== String(req.user._id)) return res.status(403).json({ message: 'Forbidden' });
+  const quotes = await Quote.find({ requestId: doc._id, status: { $in: ['pending', 'accepted'] } })
+    .populate('driverId', 'firstName surname phoneNumber rating')
+    .sort({ amount: 1, createdAt: 1 })
+    .lean();
+  res.json({ quotes });
+}
+
+
+
+exports.saveAcceptedQuote = async (req, res) => {
+  const request = await DeliveryRequest.findById(req.params.id);
+  if (!request) return res.status(404).json({ message: 'Request not found' });
+  if (String(request.buyerId) !== String(req.user._id)) return res.status(403).json({ message: 'Forbidden' });
+  if (request.status !== 'open') return res.status(400).json({ message: 'Request is not open' });
+
+
+  const quote = await Quote.findOne({ _id: req.params.qid, requestId: request._id, status: 'pending' }).populate('driverId');
+  if (!quote) return res.status(404).json({ message: 'Quote not found or not pending' });
+
+
+  // Create a DriverJob from the request + accepted quote
+  const job = await DriverJob.create({
+    buyer_name: `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || req.user.email,
+    buyer_phone: req.user.phone || '',
+    farmer_name: request.pickup?.name || 'Farmer',
+    commodity: request.produceType,
+    weight_kg: request.unit?.toLowerCase() === 'kg' ? request.quantity : undefined,
+    payment_amount: quote.amount,
+    pickup_location: {
+      name: request.pickup?.name, address: request.pickup?.address,
+      lat: request.pickup.lat, lng: request.pickup.lng,
+    },
+    dropoff_location: {
+      name: request.dropoff?.name, address: request.dropoff?.address,
+      lat: request.dropoff.lat, lng: request.dropoff.lng,
+    },
+    instructions: request.notes || '',
+    status: 'active',
+    accepted_by: quote.driverId._id,
+    accepted_at: new Date(),
+  });
+
+
+  // Update request + quotes
+  request.status = 'awarded';
+  request.chosenQuote = quote._id;
+  request.job = job._id;
+  await request.save();
+
+
+  quote.status = 'accepted';
+  await quote.save();
+  await Quote.updateMany({ requestId: request._id, _id: { $ne: quote._id }, status: 'pending' }, { $set: { status: 'rejected' } });
+
+
+  // Notify drivers
+  try { req.io?.emit('job:awarded', { _id: job._id.toString(), requestId: request._id.toString(), driverId: quote.driverId._id.toString() }); } catch { }
+
+
+  res.json({ jobId: job._id });
+}
 
 // Register new driver with OTP verification
 exports.registerDriver = async (req, res) => {
@@ -109,11 +234,11 @@ exports.getDrivers = async (req, res) => {
 
     // Build filter object
     const filter = {};
-    
+
     if (status) filter.status = status;
     if (district) filter.district = new RegExp(district, 'i');
     if (vehicleType) filter.vehicleType = vehicleType;
-    
+
     // Search across multiple fields
     if (search) {
       filter.$or = [
@@ -165,7 +290,7 @@ exports.getDrivers = async (req, res) => {
 exports.getDriver = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const driver = await Driver.findOne({
       $or: [
         { _id: id },
@@ -347,3 +472,9 @@ exports.getDriverStats = async (req, res) => {
     });
   }
 };
+
+exports.me = async (req, res) => {
+  const me = await DriverModel.findById(req.user.sub).lean();
+  if (!me) return res.status(404).json({ message: 'Not found' });
+  res.json({ id: me._id, firstName: me.firstName, surname: me.surname, phoneNumber: me.phoneNumber, rating: me.rating });
+}
