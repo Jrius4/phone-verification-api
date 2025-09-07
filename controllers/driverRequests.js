@@ -17,7 +17,8 @@ exports.openRequests = async (req, res) => {
 };
 
 exports.submitQuote = async (req, res) => {
-    const schema = Joi3.object({ amount: Joi3.number().positive().required(), etaMinutes: Joi3.number().integer().positive().required(), note: Joi3.string().allow('', null) });
+   try{
+     const schema = Joi3.object({ amount: Joi3.number().positive().required(), etaMinutes: Joi3.number().integer().positive().required(), note: Joi3.string().allow('', null) });
     const { amount, etaMinutes, note } = await schema.validateAsync(req.body);
     const request = await DeliveryRequest3.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
@@ -27,6 +28,9 @@ exports.submitQuote = async (req, res) => {
     const q = await Quote2.create({ requestId: request._id, driverId: req.user.sub, amount, etaMinutes, note });
     try { req.io?.emit('request:quote', { requestId: request._id.toString(), quoteId: q._id.toString(), driverId: req.user.sub }); } catch { }
     res.status(201).json({ quoteId: q._id });
+   }catch(e){
+        res.status(403).json({ message:e.message||"Something" });
+   }
 };
 
 exports.getMyQuote = async (req, res) => {

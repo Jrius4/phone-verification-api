@@ -8,11 +8,16 @@ const { PaymentService } = require('../utils/payments');
 const placeSchema = Joi.object({ name: Joi.string().allow('', null), address: Joi.string().allow('', null), lat: Joi.number().required(), lng: Joi.number().required() });
 
 exports.createLot = async (req, res) => {
-    const schema = Joi.object({ produceType: Joi.string().required(), quantity: Joi.number().positive().required(), unit: Joi.string().valid('Kg', 'Bags', 'Crates', 'Litres', 'Tonnes').default('Kg'), reservePrice: Joi.number().min(0).default(0), pickup: placeSchema.required() });
-    const body = await schema.validateAsync(req.body);
-    const doc = await ProductLot.create({ ...body, farmerId: req.user.sub });
-    try { req.io?.emit('product:new', { lotId: doc._id.toString() }); } catch { }
-    res.status(201).json({ id: doc._id, status: doc.status });
+    try {
+        const schema = Joi.object({ produceType: Joi.string().required(), quantity: Joi.number().positive().required(),description:Joi.string().allow('', null), unit: Joi.string().valid('Kg', 'Bags', 'Crates', 'Litres', 'Tonnes').default('Kg'), reservePrice: Joi.number().min(0).default(0), pickup: placeSchema.required() });
+        const body = await schema.validateAsync(req.body);
+        const doc = await ProductLot.create({ ...body, farmerId: req.user._id });
+        try { req.io?.emit('product:new', { lotId: doc._id.toString() }); } catch { }
+        res.status(201).json({ id: doc._id, status: doc.status });
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ message: e.message || 'Server error' });
+    }
 };
 
 exports.openLots = async (_req, res) => {
@@ -43,11 +48,12 @@ exports.acceptBid = async (req, res) => {
     const lot = await ProductLot.findById(req.params.id);
     if (!lot) return res.status(404).json({ message: 'Lot not found' });
     if (String(lot.farmerId) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
-    if (lot.status !== 'open') return res.status(400).json({ message: 'Lot not open' });
-    const bid = await ProductBid.findOne({ _id: req.params.bidId, lotId: lot._id, status: 'pending' }).populate('buyerId');
+    // if (lot.status !== 'open') return res.status(400).json({ message: 'Lot not open' });
+    // const bid = await ProductBid.findOne({ _id: req.params.bidId, lotId: lot._id, status: 'pending' }).populate('buyerId');
+    const bid = await ProductBid.findOne({ _id: req.params.bidId, lotId: lot._id }).populate('buyerId');
     if (!bid) return res.status(404).json({ message: 'Bid not found or not pending' });
 
-    bid.status = 'accepted'; await bid.save();
+    // bid.status = 'accepted'; await bid.save();
     await ProductBid.updateMany({ lotId: lot._id, _id: { $ne: bid._id }, status: 'pending' }, { $set: { status: 'rejected' } });
     lot.status = 'awarded'; lot.awardedBid = bid._id; await lot.save();
 
@@ -57,6 +63,7 @@ exports.acceptBid = async (req, res) => {
     // Seed a DeliveryRequest for the buyer to broadcast (pickup = farm)
     const dr = await DeliveryRequest.create({
         buyerId: bid.buyerId._id,
+        farmerId: lot.farmerId,
         produceType: lot.produceType,
         quantity: lot.quantity,
         unit: lot.unit,

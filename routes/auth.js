@@ -21,13 +21,6 @@ const {
 } = require('../middleware/validation');
 const Joi = require('joi');
 
-
-
-
-
-
-
-
 const { signAuthToken } = require("./../utils/jwt")
 const {
   otpRateLimit,
@@ -46,7 +39,6 @@ const User = require('../models/User');
 const Farmer = require('../models/Farmer');
 const Buyer = require('../models/Buyer');
 
-
 const e164 = (raw) => {
   const s = String(raw || '').trim();
   if (!s) return '';
@@ -57,12 +49,9 @@ const e164 = (raw) => {
   return `+${digits}`;
 };
 
-
 const router = express.Router();
 
 router.use(ipRateLimit); // Apply IP-based rate limiting to all routes
-
-
 
 // Admin authentication routes
 router.post('/admin/login', loginRateLimit, adminLogin);
@@ -120,27 +109,21 @@ router.post('/driver/start', validateRequest(phoneSchema), async (req, res) => {
   }
 });
 
-
 // ----- DRIVER OTP VERIFY -----
 router.post('/driver/verify', async (req, res) => {
   try {
     const schema = Joi.object({ request_id: Joi.string().required(), code: Joi.string().length(6).required() });
     const { request_id, code } = await schema.validateAsync(req.body);
 
-
     const rec = await VerifyPhoneNumberOtp.findById(request_id);
     if (!rec) return res.status(400).json({ message: 'Invalid request' });
     if (rec.isOtpExpired()) return res.status(400).json({ message: 'Code expired' });
     if (rec.attempts >= 3) return res.status(400).json({ message: 'Too many attempts' });
 
-
     const ok = await rec.compareOtp(code);
     if (!ok) { await rec.incrementAttempts(); return res.status(400).json({ message: 'Invalid code' }); }
 
-
     rec.isVerified = true; await rec.save();
-
-
     // Ensure a Driver record exists for this phone (create minimal if needed)
     let driver = await Driver.findOne({ phoneNumber: rec.phoneNumber });
     if (!driver) {
@@ -155,8 +138,7 @@ router.post('/driver/verify', async (req, res) => {
       });
     }
 
-
-    const token = signAuthToken({ sub: driver._id.toString(), role: 'driver', subModel: 'Driver' });
+    const token = signAuthToken({ sub: driver._id.toString(),phoneNumber: driver.phoneNumber, role: 'driver', subModel: 'Driver' });
     const userPayload = { id: driver._id, phoneNumber: driver.phoneNumber, firstName: driver.firstName, lastName: driver.surname };
     return res.json({ token, user: userPayload, role: 'driver' });
   } catch (err) {
@@ -164,8 +146,6 @@ router.post('/driver/verify', async (req, res) => {
     return res.status(400).json({ message: err.message || 'Bad request' });
   }
 });
-
-
 // ----- EMAIL + PASSWORD LOGIN (driver/farmer/buyer) -----
 router.post('/:role(login|driver|farmer|buyer|user)/login', async (req, res) => {
   try {
@@ -208,8 +188,6 @@ router.post('/:role(login|driver|farmer|buyer|user)/login', async (req, res) => 
     return res.status(400).json({ message: err.message || 'Bad request' });
   }
 });
-
-
 // ----- PASSWORD RESET FLOW -----
 router.post('/password/forgot', async (req, res) => {
   try {
@@ -226,7 +204,6 @@ router.post('/password/forgot', async (req, res) => {
     return res.status(400).json({ message: err.message || 'Bad request' });
   }
 });
-
 
 router.post('/password/reset', async (req, res) => {
   try {
@@ -247,6 +224,5 @@ router.post('/password/reset', async (req, res) => {
     return res.status(400).json({ message: err.message || 'Bad request' });
   }
 });
-
 
 module.exports = router;

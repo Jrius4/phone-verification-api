@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Driver = require('../models/Driver');
+const Farmer = require('../models/Farmer');
+const Buyer = require('../models/Buyer');
 // Rate limiting for auth endpoints
 // Fixing the route issue by making it a function
 const rateLimit = require('express-rate-limit');
@@ -20,8 +22,8 @@ const driverAuth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded.phoneNumber) {
+   
+    if (!decoded.sub) {
       return res.status(401).json({
         success: false,
         message: 'Invalid driver token.'
@@ -29,10 +31,7 @@ const driverAuth = async (req, res, next) => {
     }
 
     // Check if driver exists and is active
-    const driver = await Driver.findOne({
-      phoneNumber: decoded.phoneNumber,
-      status: 'active'
-    });
+    const driver = await Driver.findById(decoded.sub);
 
     if (!driver) {
       return res.status(401).json({
@@ -41,7 +40,8 @@ const driverAuth = async (req, res, next) => {
       });
     }
 
-    req.driver = driver;
+    req.user = driver;
+    req.user.sub = driver._id;
     next();
   } catch (error) {
     console.error('Driver auth middleware error:', error);
@@ -63,7 +63,6 @@ const driverAuth = async (req, res, next) => {
 // Role-based authorization
 const requireRole = (roles) => {
   return (req, res, next) => {
-    console.log('User in requireRole middleware:', req);
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -87,7 +86,7 @@ const requireAdmin = requireRole(['admin']);
 
 // Admin or moderator middleware
 const requireAdminOrModerator = requireRole(['admin', 'moderator']);
-const requireDriver = requireRole(['admin', 'moderator','driver']);
+const requireDriver = requireRole(['admin', 'moderator', 'driver']);
 const requireFarmer = requireRole(['admin', 'moderator', 'farmer']);
 const requireBuyer = requireRole(['admin', 'moderator', 'buyer']);
 const requireDriverOrFarmer = requireRole(['admin', 'moderator', 'driver', 'farmer']);
@@ -198,37 +197,70 @@ const auth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
-    console.log('Decoded token:', decoded);
-
-    if(!decoded.sub) {
+   
+    if (!decoded.sub) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token payload.'
       });
     }
 
-    let userRole = null; 
-    switch(decoded.role) {
+    let userRole = null;
+    switch (decoded.role) {
       case 'driver':
-        if(decoded.sub){
-         userRole =  await Driver.findById(decoded.sub);
-          if(!userRole) {
+        if (decoded.sub) {
+          userRole = await Driver.findById(decoded.sub);
+          if (!userRole) {
             return res.status(401).json({
               success: false,
               message: 'Driver not found.'
             });
           }
-        }else {
+        } else {
           return res.status(401).json({
             success: false,
             message: 'Invalid driver token payload.'
           });
         }
         break;
-     
+
+      case 'farmer':
+        if (decoded.sub) {
+          userRole = await Farmer.findById(decoded.sub);
+          if (!userRole) {
+            return res.status(401).json({
+              success: false,
+              message: 'Driver not found.'
+            });
+          }
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid driver token payload.'
+          });
+        }
+        break;
+
+      case 'buyer':
+        if (decoded.sub) {
+          userRole = await Buyer.findById(decoded.sub);
+          if (!userRole) {
+            return res.status(401).json({
+              success: false,
+              message: 'Driver not found.'
+            });
+          }
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid driver token payload.'
+          });
+        }
+        break;
+
       case 'user':
         userRole = await User.findById(decoded.sub).select('-password');
-        if(!userRole) {
+        if (!userRole) {
           return res.status(401).json({
             success: false,
             message: 'User not found.'
@@ -243,21 +275,23 @@ const auth = async (req, res, next) => {
     }
 
     const user = userRole;
-    
+
     if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Token is no longer valid.'
       });
     }
-    
-    if(!user.role){
+
+    if (!user.role) {
       user.role = decoded.role; // Ensure role is set
-    }else{
-       user.group = decoded.role; 
+    } else {
+      user.group = decoded.role;
     }
+    user.sub = userRole._id; // Attach user ID from token
 
     req.user = user;
+    req.phoneNumber = user.phoneNumber;
     req.role = user.role || decoded.role; // Attach role from token if not in user object
     
     next();
