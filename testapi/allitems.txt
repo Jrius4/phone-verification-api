@@ -1,0 +1,1865 @@
+// ================================
+// ENHANCED SERVICES
+// ================================
+
+// services/NotificationService.js
+const Notification = require('../models/Notification');
+const SMSService = require('./SMSService');
+const EmailService = require('./EmailService');
+
+class NotificationService {
+  static async create(data) {
+    try {
+      const notification = new Notification(data);
+      await notification.save();
+
+      // Send via different channels based on priority and type
+      if (data.priority === 'urgent' || ['payment_released', 'delivery_completed'].includes(data.type)) {
+        await this.sendSMS(notification);
+      }
+      
+      if (data.type.includes('payment') || data.type.includes('bid_accepted')) {
+        await this.sendEmail(notification);
+      }
+
+      return notification;
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  }
+
+  static async sendSMS(notification) {
+    // Implementation would integrate with SMS service
+    console.log(`SMS: ${notification.title} - ${notification.message}`);
+  }
+
+  static async sendEmail(notification) {
+    // Implementation would integrate with email service
+    console.log(`Email: ${notification.title} - ${notification.message}`);
+  }
+
+  static async markAsRead(notificationId, userId) {
+    return await Notification.findOneAndUpdate(
+      { _id: notificationId, recipientId: userId },
+      { read: true, readAt: new Date() }
+    );
+  }
+}
+
+module.exports = NotificationService;
+
+// services/PaymentService.js
+class PaymentService {
+  static async processPayment({ amount, reference, method, description }) {
+    // This would integrate with actual payment gateways
+    // For now, simulating successful payment
+    return {
+      success: true,
+      transactionId: `txn_${Date.now()}`,
+      reference,
+      amount,
+      method,
+      processedAt: new Date()
+    };
+  }
+
+  static async processEscrowPayment({ amount, reference, method, description }) {
+    // This would integrate with MCash or other escrow services
+    return {
+      success: true,
+      transactionId: `escrow_${Date.now()}`,
+      reference,
+      amount,
+      method,
+      heldAt: new Date()
+    };
+  }
+}
+
+module.exports = PaymentService;
+
+// services/EscrowService.js
+class EscrowService {
+  static calculatePaymentBreakdown(driverFee) {
+    // Driver fee + 18% VAT
+    const driverFeeVAT = Math.round(driverFee * 0.18);
+    
+    // Platform fee: 5% of driver fee
+    const platformFee = Math.round(driverFee * 0.05);
+    const platformFeeVAT = Math.round(platformFee * 0.18);
+    
+    // MCash escrow fee (fixed)
+    const mcashEscrowFee = 5000;
+    const mcashEscrowFeeVAT = Math.round(mcashEscrowFee * 0.18);
+    
+    // Total amount buyer pays
+    const totalAmount = driverFee + driverFeeVAT + platformFee + platformFeeVAT + mcashEscrowFee + mcashEscrowFeeVAT;
+    
+    return {
+      driverFee,
+      driverFeeVAT,
+      platformFee,
+      platformFeeVAT,
+      mcashEscrowFee,
+      mcashEscrowFeeVAT,
+      totalAmount
+    };
+  }
+
+  static async releasePayment({ escrowPaymentId, driverAccountDetails }) {
+    // This would integrate with MCash API to release held funds
+    return {
+      success: true,
+      transactionId: `release_${Date.now()}`,
+      releasedAt: new Date()
+    };
+  }
+}
+
+module.exports = EscrowService;
+
+// ================================
+// ENHANCED MIDDLEWARE
+// ================================
+
+// middleware/auth.js - Enhanced with better role checking
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+
+exports.auth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Access denied. No token provided.' 
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);// ================================
+// ENHANCED MODELS FOR COMPLETE WORKFLOW
+// ================================
+
+// models/Produce.js - Enhanced with bidding status
+const mongoose = require('mongoose');
+
+const ProduceSchema = new mongoose.Schema({
+  farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', required: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  quantity: { type: Number, required: true },
+  unit: { type: String, enum: ['kg', 'tonnes', 'bags'], default: 'kg' },
+  pricePerUnit: { type: Number, required: true }, // UGX per unit
+  location: {
+    name: { type: String },
+    address: { type: String, required: true },
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true }
+  },
+  availableFrom: { type: Date, default: Date.now },
+  availableUntil: { type: Date },
+  status: { 
+    type: String, 
+    enum: ['available', 'has_bids', 'reserved', 'sold', 'collected'], 
+    default: 'available' 
+  },
+  images: [String],
+  harvestDate: Date,
+  quality: { type: String, enum: ['premium', 'standard', 'basic'], default: 'standard' },
+  activeBidsCount: { type: Number, default: 0 }
+}, { timestamps: true });
+
+ProduceSchema.index({ farmerId: 1, status: 1 });
+ProduceSchema.index({ location: '2dsphere' });
+
+module.exports = mongoose.model('Produce', ProduceSchema);
+
+// models/Bid.js - Enhanced with expiry management
+const mongoose = require('mongoose');
+
+const BidSchema = new mongoose.Schema({
+  produceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Produce', required: true },
+  buyerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Buyer', required: true },
+  quantity: { type: Number, required: true },
+  pricePerUnit: { type: Number, required: true },
+  totalAmount: { type: Number, required: true },
+  message: { type: String },
+  status: { 
+    type: String, 
+    enum: ['pending', 'accepted', 'rejected', 'expired', 'cancelled'], 
+    default: 'pending' 
+  },
+  expiresAt: { type: Date, required: true },
+  acceptedAt: Date,
+  rejectedAt: Date,
+  rejectionReason: String,
+  // Financial tracking
+  platformFeePaid: { type: Boolean, default: false },
+  platformFeeReference: String,
+  contactsShared: { type: Boolean, default: false }
+}, { timestamps: true });
+
+BidSchema.index({ produceId: 1, status: 1 });
+BidSchema.index({ buyerId: 1, status: 1 });
+BidSchema.index({ expiresAt: 1 }); // For cleanup jobs
+
+module.exports = mongoose.model('Bid', BidSchema);
+
+// models/Trade.js - Enhanced with delivery integration
+const mongoose = require('mongoose');
+
+const TradeSchema = new mongoose.Schema({
+  bidId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bid', required: true },
+  produceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Produce', required: true },
+  farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', required: true },
+  buyerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Buyer', required: true },
+  quantity: { type: Number, required: true },
+  pricePerUnit: { type: Number, required: true },
+  totalAmount: { type: Number, required: true },
+  
+  // Platform fee tracking
+  platformFee: { type: Number, default: 5900 }, // UGX 5,000 + 18% VAT
+  platformFeePaid: { type: Boolean, default: false },
+  platformFeeReference: String,
+  platformFeePaidAt: Date,
+  
+  // Contact sharing
+  contactsShared: { type: Boolean, default: false },
+  contactsSharedAt: Date,
+  
+  // Delivery integration
+  deliveryRequested: { type: Boolean, default: false },
+  deliveryRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryRequest' },
+  
+  // Trade status
+  status: { 
+    type: String, 
+    enum: ['active', 'awaiting_payment', 'contacts_shared', 'delivery_arranged', 'completed', 'cancelled'], 
+    default: 'active' 
+  },
+  completedAt: Date,
+  
+  // Communication log
+  communications: [{
+    type: { type: String, enum: ['sms', 'email', 'in_app'] },
+    message: String,
+    sentAt: { type: Date, default: Date.now }
+  }]
+}, { timestamps: true });
+
+TradeSchema.index({ buyerId: 1, status: 1 });
+TradeSchema.index({ farmerId: 1, status: 1 });
+
+module.exports = mongoose.model('Trade', TradeSchema);
+
+// models/DeliveryRequest.js - Enhanced with workflow tracking
+const mongoose = require('mongoose');
+
+const DeliveryRequestSchema = new mongoose.Schema({
+  tradeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trade', required: true },
+  buyerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Buyer', required: true },
+  farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', required: true },
+  
+  // Pickup details
+  pickup: {
+    address: { type: String, required: true },
+    contactName: String,
+    contactPhone: String,
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+    preferredDate: Date,
+    timeSlot: String,
+    instructions: String
+  },
+  
+  // Delivery details  
+  dropoff: {
+    address: { type: String, required: true },
+    contactName: String,
+    contactPhone: String,
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+    preferredDate: Date,
+    timeSlot: String,
+    instructions: String
+  },
+  
+  // Load details
+  produceType: String,
+  quantity: Number,
+  estimatedWeight: Number,
+  vehicleRequirement: { type: String, enum: ['motorcycle', 'pickup', 'truck'], default: 'pickup' },
+  
+  // Request status
+  status: { 
+    type: String, 
+    enum: ['open', 'quoted', 'awarded', 'driver_confirmed', 'in_progress', 'completed', 'cancelled'], 
+    default: 'open' 
+  },
+  
+  // Quote management
+  quotesReceived: { type: Number, default: 0 },
+  chosenQuote: { type: mongoose.Schema.Types.ObjectId, ref: 'Quote' },
+  
+  // Driver assignment
+  assignedDriver: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver' },
+  driverConfirmed: { type: Boolean, default: false },
+  driverConfirmedAt: Date,
+  farmerNotified: { type: Boolean, default: false },
+  farmerNotifiedAt: Date,
+  farmerConfirmed: { type: Boolean, default: false },
+  farmerConfirmedAt: Date,
+  
+  notes: String,
+  urgency: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' }
+}, { timestamps: true });
+
+DeliveryRequestSchema.index({ buyerId: 1, status: 1 });
+DeliveryRequestSchema.index({ farmerId: 1 });
+DeliveryRequestSchema.index({ status: 1, createdAt: -1 });
+DeliveryRequestSchema.index({ 'pickup.lat': 1, 'pickup.lng': 1 }); // For driver proximity
+
+module.exports = mongoose.model('DeliveryRequest', DeliveryRequestSchema);
+
+// models/Quote.js - Enhanced with driver details
+const mongoose = require('mongoose');
+
+const QuoteSchema = new mongoose.Schema({
+  requestId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryRequest', required: true },
+  driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver', required: true },
+  
+  // Quote details
+  amount: { type: Number, required: true }, // Driver's fee before taxes
+  etaMinutes: { type: Number, required: true },
+  vehicleType: { type: String, enum: ['motorcycle', 'pickup', 'truck'], required: true },
+  
+  // Additional details
+  note: String,
+  canLoadImmediately: { type: Boolean, default: true },
+  
+  // Quote status
+  status: { 
+    type: String, 
+    enum: ['pending', 'accepted', 'rejected', 'expired', 'cancelled'], 
+    default: 'pending' 
+  },
+  
+  // Driver confirmation tracking
+  driverConfirmed: { type: Boolean, default: false },
+  driverConfirmedAt: Date,
+  
+  expiresAt: { type: Date, required: true }, // Auto-expire quotes
+  acceptedAt: Date,
+  rejectedAt: Date
+}, { timestamps: true });
+
+QuoteSchema.index({ requestId: 1, status: 1 });
+QuoteSchema.index({ driverId: 1, status: 1 });
+QuoteSchema.index({ expiresAt: 1 }); // For cleanup
+
+module.exports = mongoose.model('Quote', QuoteSchema);
+
+// models/EscrowPayment.js - Enhanced with detailed tracking
+const mongoose = require('mongoose');
+
+const EscrowPaymentSchema = new mongoose.Schema({
+  deliveryRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryRequest', required: true },
+  quoteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quote', required: true },
+  buyerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Buyer', required: true },
+  driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver', required: true },
+  
+  // Payment breakdown
+  driverFee: { type: Number, required: true }, // Base driver fee
+  driverFeeVAT: { type: Number, required: true }, // 18% on driver fee
+  platformFee: { type: Number, required: true }, // 5% of driver fee
+  platformFeeVAT: { type: Number, required: true }, // 18% on platform fee
+  mcashEscrowFee: { type: Number, required: true }, // Fixed MCash fee
+  mcashEscrowFeeVAT: { type: Number, required: true }, // 18% on MCash fee
+  totalAmount: { type: Number, required: true }, // Total paid by buyer
+  
+  // Payment tracking
+  paymentReference: { type: String, required: true, unique: true },
+  paymentMethod: { type: String, enum: ['mobile_money', 'bank_transfer', 'card'] },
+  status: { 
+    type: String, 
+    enum: ['pending', 'paid', 'held', 'released', 'refunded', 'failed'], 
+    default: 'pending' 
+  },
+  
+  // Timeline
+  paidAt: Date,
+  heldAt: Date,
+  releasedAt: Date,
+  refundedAt: Date,
+  
+  // Release conditions
+  releaseAuthorizedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Buyer' },
+  releaseReason: String,
+  
+  // MCash integration
+  mcashTransactionId: String,
+  mcashReferenceNumber: String,
+  
+  // Notifications sent
+  notificationsSent: [{
+    recipient: { type: String, enum: ['buyer', 'driver', 'platform'] },
+    type: String,
+    sentAt: { type: Date, default: Date.now },
+    status: { type: String, enum: ['sent', 'delivered', 'failed'] }
+  }]
+}, { timestamps: true });
+
+EscrowPaymentSchema.index({ buyerId: 1 });
+EscrowPaymentSchema.index({ driverId: 1 });
+EscrowPaymentSchema.index({ paymentReference: 1 });
+EscrowPaymentSchema.index({ status: 1 });
+
+module.exports = mongoose.model('EscrowPayment', EscrowPaymentSchema);
+
+// models/DeliveryTracking.js - Enhanced with verification
+const mongoose = require('mongoose');
+
+const DeliveryTrackingSchema = new mongoose.Schema({
+  deliveryRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryRequest', required: true },
+  driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver', required: true },
+  
+  status: { 
+    type: String, 
+    enum: [
+      'driver_assigned',
+      'driver_confirmed', 
+      'farmer_notified',
+      'farmer_confirmed',
+      'en_route_pickup', 
+      'at_pickup_location', 
+      'farmer_verifying_driver',
+      'pickup_completed',
+      'transfer_confirmed', 
+      'en_route_delivery', 
+      'at_delivery_location',
+      'buyer_verifying_driver', 
+      'delivery_completed',
+      'payment_authorized',
+      'payment_released'
+    ], 
+    required: true 
+  },
+  
+  // Location tracking
+  location: {
+    lat: Number,
+    lng: Number,
+    address: String
+  },
+  
+  // Verification details
+  verification: {
+    method: { type: String, enum: ['nfc', 'phone_verification', 'manual_check'] },
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, refPath: 'verification.verifierType' },
+    verifierType: { type: String, enum: ['Farmer', 'Buyer'] },
+    driverPhone: String,
+    driverLicense: String,
+    nfcData: String,
+    verificationTime: Date,
+    success: Boolean
+  },
+  
+  notes: String,
+  timestamp: { type: Date, default: Date.now },
+  
+  // Photos/evidence
+  photos: [String], // URLs to uploaded photos
+  
+  // System generated vs manual entry
+  source: { type: String, enum: ['driver_app', 'farmer_confirmation', 'buyer_confirmation', 'system'], default: 'driver_app' }
+}, { timestamps: true });
+
+DeliveryTrackingSchema.index({ deliveryRequestId: 1, timestamp: 1 });
+DeliveryTrackingSchema.index({ driverId: 1, timestamp: -1 });
+
+module.exports = mongoose.model('DeliveryTracking', DeliveryTrackingSchema);
+
+// models/Notification.js - For managing all notifications
+const mongoose = require('mongoose');
+
+const NotificationSchema = new mongoose.Schema({
+  recipientId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  recipientType: { type: String, enum: ['Farmer', 'Buyer', 'Driver'], required: true },
+  
+  type: { 
+    type: String, 
+    enum: [
+      'bid_received', 'bid_accepted', 'bid_rejected',
+      'platform_fee_reminder', 'contacts_shared',
+      'delivery_quote_received', 'delivery_driver_assigned',
+      'driver_confirmed', 'farmer_notified', 'pickup_scheduled',
+      'driver_en_route', 'driver_arrived', 'pickup_completed',
+      'delivery_en_route', 'delivery_arrived', 'delivery_completed',
+      'payment_required', 'payment_authorized', 'payment_released'
+    ], 
+    required: true 
+  },
+  
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  
+  // Related entities
+  relatedId: mongoose.Schema.Types.ObjectId, // ID of bid, trade, delivery, etc.
+  relatedType: { type: String, enum: ['Bid', 'Trade', 'DeliveryRequest', 'Quote', 'EscrowPayment'] },
+  
+  // Action buttons (for in-app notifications)
+  actions: [{
+    label: String,
+    action: String, // e.g., 'accept_bid', 'view_driver_details'
+    url: String
+  }],
+  
+  // Delivery status
+  channels: {
+    inApp: { sent: Boolean, readAt: Date },
+    sms: { sent: Boolean, sentAt: Date, status: String },
+    email: { sent: Boolean, sentAt: Date, status: String }
+  },
+  
+  priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
+  read: { type: Boolean, default: false },
+  readAt: Date
+}, { timestamps: true });
+
+NotificationSchema.index({ recipientId: 1, recipientType: 1, read: 1 });
+NotificationSchema.index({ createdAt: -1 });
+
+module.exports = mongoose.model('Notification', NotificationSchema);
+
+// ================================
+// ENHANCED CONTROLLERS
+// ================================
+
+// controllers/produceController.js
+const Produce = require('../models/Produce');
+const Bid = require('../models/Bid');
+const NotificationService = require('../services/NotificationService');
+
+exports.createProduce = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const produce = new Produce({ ...req.body, farmerId });
+    await produce.save();
+    
+    res.status(201).json({ 
+      success: true, 
+      data: produce,
+      message: 'Produce listed successfully' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.getProduceList = async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search, 
+      location, 
+      radius = 50,
+      minPrice,
+      maxPrice,
+      unit,
+      quality,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+    
+    let query = { status: { $in: ['available', 'has_bids'] } };
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Price filtering
+    if (minPrice || maxPrice) {
+      query.pricePerUnit = {};
+      if (minPrice) query.pricePerUnit.$gte = Number(minPrice);
+      if (maxPrice) query.pricePerUnit.$lte = Number(maxPrice);
+    }
+
+    // Other filters
+    if (unit) query.unit = unit;
+    if (quality) query.quality = quality;
+
+    // Location-based filtering
+    if (location) {
+      const [lat, lng] = location.split(',').map(Number);
+      query.location = {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [lng, lat] },
+          $maxDistance: radius * 1000
+        }
+      };
+    }
+
+    // Sorting
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const produce = await Produce.find(query)
+      .populate('farmerId', 'firstName lastName profileImage rating')
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .sort(sortOptions);
+
+    const total = await Produce.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: produce,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getMyProduce = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const { status } = req.query;
+    
+    let query = { farmerId };
+    if (status) query.status = status;
+
+    const produce = await Produce.find(query)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'activeBidsCount',
+        // We'll calculate this in the aggregation pipeline
+      });
+
+    // Get bid counts for each produce
+    const produceWithBids = await Promise.all(produce.map(async (item) => {
+      const bidCount = await Bid.countDocuments({ 
+        produceId: item._id, 
+        status: 'pending' 
+      });
+      return {
+        ...item.toObject(),
+        activeBidsCount: bidCount
+      };
+    }));
+
+    res.json({ 
+      success: true, 
+      data: produceWithBids 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateProduce = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const produce = await Produce.findOneAndUpdate(
+      { _id: req.params.id, farmerId },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!produce) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Produce not found or access denied' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      data: produce,
+      message: 'Produce updated successfully' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// controllers/bidController.js
+const Trade = require('../models/Trade');
+
+exports.createBid = async (req, res) => {
+  try {
+    const buyerId = req.user.sub || req.user.id;
+    const { produceId, quantity, pricePerUnit, message } = req.body;
+    
+    const produce = await Produce.findById(produceId).populate('farmerId');
+    if (!produce || !['available', 'has_bids'].includes(produce.status)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Produce not available for bidding' 
+      });
+    }
+
+    // Check if buyer already has a pending bid on this produce
+    const existingBid = await Bid.findOne({
+      produceId,
+      buyerId,
+      status: 'pending'
+    });
+
+    if (existingBid) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending bid on this produce'
+      });
+    }
+
+    const totalAmount = quantity * pricePerUnit;
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    const bid = new Bid({
+      produceId,
+      buyerId,
+      quantity,
+      pricePerUnit,
+      totalAmount,
+      message,
+      expiresAt
+    });
+
+    await bid.save();
+
+    // Update produce status to has_bids if this is the first bid
+    await Produce.findByIdAndUpdate(produceId, { 
+      status: 'has_bids',
+      $inc: { activeBidsCount: 1 }
+    });
+
+    // Send notification to farmer
+    await NotificationService.create({
+      recipientId: produce.farmerId._id,
+      recipientType: 'Farmer',
+      type: 'bid_received',
+      title: 'New Bid Received',
+      message: `You received a new bid of UGX ${totalAmount.toLocaleString()} for your ${produce.name}`,
+      relatedId: bid._id,
+      relatedType: 'Bid'
+    });
+
+    res.status(201).json({ 
+      success: true, 
+      data: bid,
+      message: 'Bid submitted successfully. The farmer will be notified.' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.getFarmerBids = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const { status = 'pending', page = 1, limit = 10 } = req.query;
+    
+    const bids = await Bid.find({ status })
+      .populate({
+        path: 'produceId',
+        match: { farmerId },
+        select: 'name quantity unit pricePerUnit location status'
+      })
+      .populate('buyerId', 'firstName lastName profileImage rating')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    // Filter out bids where produce doesn't belong to farmer
+    const farmerBids = bids.filter(bid => bid.produceId);
+
+    res.json({ 
+      success: true, 
+      data: farmerBids,
+      message: `Found ${farmerBids.length} ${status} bids` 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getBuyerBids = async (req, res) => {
+  try {
+    const buyerId = req.user.sub || req.user.id;
+    const { status, page = 1, limit = 10 } = req.query;
+    
+    let query = { buyerId };
+    if (status) query.status = status;
+
+    const bids = await Bid.find(query)
+      .populate({
+        path: 'produceId',
+        select: 'name quantity unit location',
+        populate: {
+          path: 'farmerId',
+          select: 'firstName lastName profileImage rating'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    res.json({ success: true, data: bids });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.acceptBid = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const bidId = req.params.id;
+
+    const bid = await Bid.findById(bidId)
+      .populate('produceId')
+      .populate('buyerId');
+      
+    if (!bid || String(bid.produceId.farmerId) !== farmerId) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Bid not found or access denied' 
+      });
+    }
+
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Bid is no longer pending' 
+      });
+    }
+
+    // Create trade record
+    const trade = new Trade({
+      bidId: bid._id,
+      produceId: bid.produceId._id,
+      farmerId,
+      buyerId: bid.buyerId._id,
+      quantity: bid.quantity,
+      pricePerUnit: bid.pricePerUnit,
+      totalAmount: bid.totalAmount,
+      platformFee: 5900, // UGX 5,000 + 18% VAT
+      status: 'awaiting_payment'
+    });
+
+    await trade.save();
+
+    // Update bid status
+    bid.status = 'accepted';
+    bid.acceptedAt = new Date();
+    await bid.save();
+
+    // Update produce status
+    await Produce.findByIdAndUpdate(bid.produceId._id, { 
+      status: 'reserved',
+      $inc: { activeBidsCount: -1 }
+    });
+
+    // Reject other pending bids for same produce
+    const rejectedBids = await Bid.updateMany(
+      { produceId: bid.produceId._id, status: 'pending', _id: { $ne: bidId } },
+      { 
+        status: 'rejected', 
+        rejectedAt: new Date(),
+        rejectionReason: 'Another bid was accepted'
+      }
+    );
+
+    // Send notification to buyer
+    await NotificationService.create({
+      recipientId: bid.buyerId._id,
+      recipientType: 'Buyer',
+      type: 'bid_rejected',
+      title: 'Bid Rejected',
+      message: `Your bid for ${bid.produceId.name} was not accepted. Reason: ${bid.rejectionReason}`,
+      relatedId: bid._id,
+      relatedType: 'Bid'
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Bid rejected successfully. Buyer has been notified.' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// controllers/paymentController.js
+const PaymentService = require('../services/PaymentService');
+const EscrowService = require('../services/EscrowService');
+
+exports.payPlatformFee = async (req, res) => {
+  try {
+    const buyerId = req.user.sub || req.user.id;
+    const { tradeId, paymentMethod, paymentReference } = req.body;
+
+    const trade = await Trade.findOne({ _id: tradeId, buyerId })
+      .populate('farmerId', 'firstName lastName email phoneNumber')
+      .populate('buyerId', 'firstName lastName email phoneNumber')
+      .populate('produceId', 'name location');
+
+    if (!trade) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Trade not found or access denied' 
+      });
+    }
+
+    if (trade.platformFeePaid) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Platform fee already paid' 
+      });
+    }
+
+    // Process payment (integrate with actual payment gateway)
+    const paymentResult = await PaymentService.processPayment({
+      amount: trade.platformFee,
+      reference: paymentReference,
+      method: paymentMethod,
+      description: `Platform fee for trade ${trade._id}`
+    });
+
+    if (!paymentResult.success) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Payment processing failed',
+        error: paymentResult.error 
+      });
+    }
+
+    // Update trade
+    trade.platformFeePaid = true;
+    trade.platformFeeReference = paymentReference;
+    trade.platformFeePaidAt = new Date();
+    trade.contactsShared = true;
+    trade.contactsSharedAt = new Date();
+    trade.status = 'contacts_shared';
+    await trade.save();
+
+    // Send notifications to both parties with contact details
+    await NotificationService.create({
+      recipientId: trade.farmerId._id,
+      recipientType: 'Farmer',
+      type: 'contacts_shared',
+      title: 'Buyer Contact Details',
+      message: `Buyer has paid platform fee. Contact: ${trade.buyerId.firstName} ${trade.buyerId.lastName} - ${trade.buyerId.phoneNumber}`,
+      relatedId: trade._id,
+      relatedType: 'Trade'
+    });
+
+    await NotificationService.create({
+      recipientId: trade.buyerId._id,
+      recipientType: 'Buyer',
+      type: 'contacts_shared',
+      title: 'Farmer Contact Details',
+      message: `Payment successful! Farmer contact: ${trade.farmerId.firstName} ${trade.farmerId.lastName} - ${trade.farmerId.phoneNumber}`,
+      relatedId: trade._id,
+      relatedType: 'Trade'
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Platform fee paid successfully. Contact details shared.',
+      data: {
+        trade,
+        farmerContact: {
+          name: `${trade.farmerId.firstName} ${trade.farmerId.lastName}`,
+          phone: trade.farmerId.phoneNumber,
+          email: trade.farmerId.email
+        },
+        produceDetails: {
+          name: trade.produceId.name,
+          location: trade.produceId.location
+        }
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.calculateDeliveryPayment = async (req, res) => {
+  try {
+    const { quoteId } = req.body;
+    
+    const quote = await Quote.findById(quoteId);
+    if (!quote) {
+      return res.status(404).json({ success: false, message: 'Quote not found' });
+    }
+
+    const breakdown = EscrowService.calculatePaymentBreakdown(quote.amount);
+    
+    res.json({
+      success: true,
+      data: {
+        quoteId: quote._id,
+        driverFee: quote.amount,
+        breakdown
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.payDeliveryEscrow = async (req, res) => {
+  try {
+    const buyerId = req.user.sub || req.user.id;
+    const { quoteId, paymentReference, paymentMethod } = req.body;
+
+    const quote = await Quote.findById(quoteId)
+      .populate('driverId')
+      .populate('requestId');
+      
+    if (!quote || quote.status !== 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Quote not available or already processed' 
+      });
+    }
+
+    const request = await DeliveryRequest.findOne({ 
+      _id: quote.requestId, 
+      buyerId 
+    });
+    
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Delivery request not found or access denied' 
+      });
+    }
+
+    const breakdown = EscrowService.calculatePaymentBreakdown(quote.amount);
+
+    // Process escrow payment
+    const paymentResult = await PaymentService.processEscrowPayment({
+      amount: breakdown.totalAmount,
+      reference: paymentReference,
+      method: paymentMethod,
+      description: `Delivery escrow for request ${request._id}`
+    });
+
+    if (!paymentResult.success) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Escrow payment processing failed',
+        error: paymentResult.error 
+      });
+    }
+
+    // Create escrow payment record
+    const escrowPayment = new EscrowPayment({
+      deliveryRequestId: request._id,
+      quoteId: quote._id,
+      buyerId,
+      driverId: quote.driverId._id,
+      driverFee: quote.amount,
+      driverFeeVAT: breakdown.driverFeeVAT,
+      platformFee: breakdown.platformFee,
+      platformFeeVAT: breakdown.platformFeeVAT,
+      mcashEscrowFee: breakdown.mcashEscrowFee,
+      mcashEscrowFeeVAT: breakdown.mcashEscrowFeeVAT,
+      totalAmount: breakdown.totalAmount,
+      paymentReference,
+      paymentMethod,
+      status: 'held',
+      paidAt: new Date(),
+      heldAt: new Date(),
+      mcashTransactionId: paymentResult.transactionId
+    });
+
+    await escrowPayment.save();
+
+    // Update request and quote status
+    request.status = 'awarded';
+    request.chosenQuote = quote._id;
+    request.assignedDriver = quote.driverId._id;
+    await request.save();
+
+    quote.status = 'accepted';
+    await quote.save();
+
+    // Reject other quotes
+    await Quote.updateMany(
+      { requestId: request._id, _id: { $ne: quoteId } },
+      { status: 'rejected' }
+    );
+
+    // Create tracking entry
+    await DeliveryTracking.create({
+      deliveryRequestId: request._id,
+      driverId: quote.driverId._id,
+      status: 'driver_assigned',
+      notes: 'Driver assigned and escrow payment held'
+    });
+
+    // Send notifications
+    await NotificationService.create({
+      recipientId: quote.driverId._id,
+      recipientType: 'Driver',
+      type: 'delivery_driver_assigned',
+      title: 'New Delivery Assignment',
+      message: `You've been assigned a delivery. Payment is held in escrow. Please confirm acceptance.`,
+      relatedId: request._id,
+      relatedType: 'DeliveryRequest',
+      actions: [{
+        label: 'Confirm Job',
+        action: 'confirm_delivery_job',
+        url: `/deliveries/${request._id}/confirm`
+      }]
+    });
+
+    res.json({
+      success: true,
+      message: 'Escrow payment successful. Driver assigned.',
+      data: {
+        driverDetails: {
+          name: `${quote.driverId.firstName} ${quote.driverId.surname}`,
+          phone: quote.driverId.phoneNumber,
+          vehicle: quote.driverId.vehicleNumber,
+          license: quote.driverId.driversLicenseNumber
+        },
+        escrowPayment: {
+          id: escrowPayment._id,
+          totalPaid: breakdown.totalAmount,
+          status: 'held'
+        }
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// controllers/deliveryController.js - Enhanced
+const DeliveryRequest = require('../models/DeliveryRequest');
+const Quote = require('../models/Quote');
+const DeliveryTracking = require('../models/DeliveryTracking');
+const Driver = require('../models/Driver');
+
+exports.createDeliveryRequest = async (req, res) => {
+  try {
+    const buyerId = req.user.sub || req.user.id;
+    const { tradeId, pickup, dropoff, produceType, quantity, vehicleRequirement, notes, urgency } = req.body;
+
+    // Verify trade exists and contacts are shared
+    const trade = await Trade.findOne({ _id: tradeId, buyerId })
+      .populate('farmerId')
+      .populate('produceId');
+      
+    if (!trade || !trade.contactsShared) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid trade or contacts not yet shared' 
+      });
+    }
+
+    if (trade.deliveryRequested) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Delivery already requested for this trade' 
+      });
+    }
+
+    const request = new DeliveryRequest({
+      tradeId,
+      buyerId,
+      farmerId: trade.farmerId._id,
+      pickup: {
+        ...pickup,
+        contactName: `${trade.farmerId.firstName} ${trade.farmerId.lastName}`,
+        contactPhone: trade.farmerId.phoneNumber
+      },
+      dropoff,
+      produceType: produceType || trade.produceId.name,
+      quantity: quantity || trade.quantity,
+      vehicleRequirement: vehicleRequirement || 'pickup',
+      notes,
+      urgency: urgency || 'medium'
+    });
+
+    await request.save();
+    
+    // Update trade
+    trade.deliveryRequested = true;
+    trade.deliveryRequestId = request._id;
+    trade.status = 'delivery_arranged';
+    await trade.save();
+
+    // Notify nearby drivers
+    await this.notifyNearbyDrivers(request);
+
+    res.status(201).json({ 
+      success: true, 
+      data: request,
+      message: 'Delivery request created successfully. Nearby drivers have been notified.' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.notifyNearbyDrivers = async (request, radiusKm = 25) => {
+  try {
+    // Find drivers within radius of pickup location
+    const nearbyDrivers = await Driver.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [request.pickup.lng, request.pickup.lat]
+          },
+          $maxDistance: radiusKm * 1000
+        }
+      },
+      isActive: true,
+      isAvailable: true
+    }).limit(10);
+
+    // Send notifications to nearby drivers
+    const notifications = nearbyDrivers.map(driver => 
+      NotificationService.create({
+        recipientId: driver._id,
+        recipientType: 'Driver',
+        type: 'delivery_quote_received',
+        title: 'New Delivery Job Available',
+        message: `Delivery job available ${Math.round(
+          this.calculateDistance(
+            driver.location.coordinates[1], 
+            driver.location.coordinates[0],
+            request.pickup.lat, 
+            request.pickup.lng
+          )
+        )}km away. Submit your quote now!`,
+        relatedId: request._id,
+        relatedType: 'DeliveryRequest',
+        actions: [{
+          label: 'View Job',
+          action: 'view_delivery_job',
+          url: `/deliveries/available/${request._id}`
+        }]
+      })
+    );
+
+    await Promise.all(notifications);
+    
+    return nearbyDrivers.length;
+  } catch (error) {
+    console.error('Error notifying nearby drivers:', error);
+    return 0;
+  }
+};
+
+exports.calculateDistance = (lat1, lon1, lat2, lon2) => {
+  // Haversine formula for calculating distance
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
+exports.getAvailableJobs = async (req, res) => {
+  try {
+    const driverId = req.user.sub || req.user.id;
+    const { lat, lng, radius = 25 } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Current location (lat, lng) required' 
+      });
+    }
+
+    // Find open delivery requests within radius
+    const availableJobs = await DeliveryRequest.find({
+      status: 'open',
+      'pickup.lat': { $exists: true },
+      'pickup.lng': { $exists: true }
+    }).populate('buyerId', 'firstName lastName rating')
+     .populate('tradeId', 'totalAmount');
+
+    // Filter by distance and check if driver already quoted
+    const jobsWithDistance = await Promise.all(
+      availableJobs.map(async (job) => {
+        const distance = this.calculateDistance(
+          parseFloat(lat), parseFloat(lng),
+          job.pickup.lat, job.pickup.lng
+        );
+
+        if (distance > radius) return null;
+
+        // Check if driver already submitted quote
+        const existingQuote = await Quote.findOne({
+          requestId: job._id,
+          driverId,
+          status: { $in: ['pending', 'accepted'] }
+        });
+
+        if (existingQuote) return null;
+
+        return {
+          ...job.toObject(),
+          distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+          estimatedDuration: Math.ceil(distance / 40 * 60) // Rough estimate in minutes
+        };
+      })
+    );
+
+    const filteredJobs = jobsWithDistance.filter(job => job !== null);
+
+    res.json({
+      success: true,
+      data: filteredJobs,
+      message: `Found ${filteredJobs.length} available jobs within ${radius}km`
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.submitQuote = async (req, res) => {
+  try {
+    const driverId = req.user.sub || req.user.id;
+    const { requestId, amount, etaMinutes, vehicleType, note, canLoadImmediately } = req.body;
+
+    const request = await DeliveryRequest.findById(requestId);
+    if (!request || request.status !== 'open') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Delivery request not available for quotes' 
+      });
+    }
+
+    // Check if driver already submitted quote
+    const existingQuote = await Quote.findOne({
+      requestId,
+      driverId,
+      status: { $in: ['pending', 'accepted'] }
+    });
+
+    if (existingQuote) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'You have already submitted a quote for this job' 
+      });
+    }
+
+    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+
+    const quote = new Quote({
+      requestId,
+      driverId,
+      amount,
+      etaMinutes,
+      vehicleType,
+      note,
+      canLoadImmediately: canLoadImmediately !== false,
+      expiresAt
+    });
+
+    await quote.save();
+
+    // Update request status and quote count
+    await DeliveryRequest.findByIdAndUpdate(requestId, {
+      status: 'quoted',
+      $inc: { quotesReceived: 1 }
+    });
+
+    // Notify buyer about new quote
+    await NotificationService.create({
+      recipientId: request.buyerId,
+      recipientType: 'Buyer',
+      type: 'delivery_quote_received',
+      title: 'New Delivery Quote',
+      message: `New quote received: UGX ${amount.toLocaleString()} - ETA ${etaMinutes} minutes`,
+      relatedId: quote._id,
+      relatedType: 'Quote'
+    });
+
+    const quoteWithDriver = await Quote.findById(quote._id)
+      .populate('driverId', 'firstName surname phoneNumber vehicleNumber driversLicenseNumber rating');
+
+    res.status(201).json({ 
+      success: true, 
+      data: quoteWithDriver,
+      message: 'Quote submitted successfully. Buyer will be notified.' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.getRequestQuotes = async (req, res) => {
+  try {
+    const buyerId = req.user.sub || req.user.id;
+    const requestId = req.params.requestId;
+
+    const request = await DeliveryRequest.findOne({ _id: requestId, buyerId });
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Delivery request not found or access denied' 
+      });
+    }
+
+    const quotes = await Quote.find({ 
+      requestId, 
+      status: 'pending',
+      expiresAt: { $gt: new Date() } 
+    }).populate('driverId', 'firstName surname phoneNumber vehicleNumber driversLicenseNumber rating profileImage')
+     .sort({ amount: 1 }); // Sort by price, lowest first
+
+    res.json({
+      success: true,
+      data: quotes,
+      message: `Found ${quotes.length} active quotes`
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// controllers/trackingController.js - Enhanced with full workflow
+exports.confirmDriverJob = async (req, res) => {
+  try {
+    const driverId = req.user.sub || req.user.id;
+    const requestId = req.params.requestId;
+
+    const request = await DeliveryRequest.findOne({
+      _id: requestId,
+      assignedDriver: driverId,
+      status: 'awarded'
+    });
+
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Delivery request not found or not assigned to you' 
+      });
+    }
+
+    // Update request status
+    request.driverConfirmed = true;
+    request.driverConfirmedAt = new Date();
+    request.status = 'driver_confirmed';
+    await request.save();
+
+    // Create tracking entry
+    await DeliveryTracking.create({
+      deliveryRequestId: requestId,
+      driverId,
+      status: 'driver_confirmed',
+      notes: 'Driver confirmed acceptance of delivery job'
+    });
+
+    // Notify farmer about driver assignment
+    await NotificationService.create({
+      recipientId: request.farmerId,
+      recipientType: 'Farmer',
+      type: 'driver_confirmed',
+      title: 'Driver Assigned for Pickup',
+      message: 'A driver has been assigned to collect your produce. They will contact you to arrange pickup.',
+      relatedId: requestId,
+      relatedType: 'DeliveryRequest'
+    });
+
+    // Mark farmer as notified
+    request.farmerNotified = true;
+    request.farmerNotifiedAt = new Date();
+    await request.save();
+
+    const driver = await Driver.findById(driverId);
+    
+    res.json({
+      success: true,
+      message: 'Job confirmed successfully. Farmer has been notified.',
+      data: {
+        driverDetails: {
+          name: `${driver.firstName} ${driver.surname}`,
+          phone: driver.phoneNumber,
+          vehicle: driver.vehicleNumber,
+          license: driver.driversLicenseNumber
+        },
+        nextStep: 'Contact farmer to arrange pickup'
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.confirmFarmerReady = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const requestId = req.params.requestId;
+
+    const request = await DeliveryRequest.findOne({
+      _id: requestId,
+      farmerId,
+      status: 'driver_confirmed'
+    }).populate('assignedDriver');
+
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Delivery request not found or driver not yet confirmed' 
+      });
+    }
+
+    // Update request status
+    request.farmerConfirmed = true;
+    request.farmerConfirmedAt = new Date();
+    await request.save();
+
+    // Create tracking entry
+    await DeliveryTracking.create({
+      deliveryRequestId: requestId,
+      driverId: request.assignedDriver._id,
+      status: 'farmer_confirmed',
+      notes: 'Farmer confirmed readiness for pickup'
+    });
+
+    // Notify driver that farmer is ready
+    await NotificationService.create({
+      recipientId: request.assignedDriver._id,
+      recipientType: 'Driver',
+      type: 'farmer_confirmed',
+      title: 'Farmer Ready for Pickup',
+      message: 'Farmer has confirmed they are ready for pickup. You can now proceed to collection.',
+      relatedId: requestId,
+      relatedType: 'DeliveryRequest',
+      actions: [{
+        label: 'Start Journey',
+        action: 'start_pickup_journey',
+        url: `/deliveries/${requestId}/pickup`
+      }]
+    });
+
+    res.json({
+      success: true,
+      message: 'Confirmed readiness for pickup. Driver has been notified.',
+      data: {
+        driverDetails: {
+          name: `${request.assignedDriver.firstName} ${request.assignedDriver.surname}`,
+          phone: request.assignedDriver.phoneNumber,
+          vehicle: request.assignedDriver.vehicleNumber
+        }
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateDeliveryStatus = async (req, res) => {
+  try {
+    const { requestId, status, location, notes, photos } = req.body;
+    const driverId = req.user.sub || req.user.id;
+
+    const validStatuses = [
+      'en_route_pickup', 'at_pickup_location', 'pickup_completed',
+      'en_route_delivery', 'at_delivery_location', 'delivery_completed'
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid status' 
+      });
+    }
+
+    const request = await DeliveryRequest.findOne({
+      _id: requestId,
+      assignedDriver: driverId
+    });
+
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Delivery request not found or access denied' 
+      });
+    }
+
+    // Create tracking entry
+    const tracking = new DeliveryTracking({
+      deliveryRequestId: requestId,
+      driverId,
+      status,
+      location,
+      notes,
+      photos: photos || [],
+      source: 'driver_app'
+    });
+
+    await tracking.save();
+
+    // Update request status for key milestones
+    if (status === 'pickup_completed') {
+      request.status = 'in_progress';
+      await request.save();
+
+      // Notify buyer that pickup is complete
+      await NotificationService.create({
+        recipientId: request.buyerId,
+        recipientType: 'Buyer',
+        type: 'pickup_completed',
+        title: 'Pickup Completed',
+        message: 'Your produce has been collected and is on its way to you!',
+        relatedId: requestId,
+        relatedType: 'DeliveryRequest'
+      });
+    }
+
+    if (status === 'delivery_completed') {
+      request.status = 'completed';
+      await request.save();
+    }
+
+    // Emit real-time update
+    if (req.io) {
+      req.io.emit(`delivery:${requestId}:update`, {
+        status,
+        location,
+        timestamp: tracking.timestamp,
+        notes
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      data: tracking,
+      message: 'Status updated successfully' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.verifyDriverIdentity = async (req, res) => {
+  try {
+    const { driverPhone, requestId, verificationType = 'phone_verification' } = req.body;
+    const verifierId = req.user.sub || req.user.id;
+    const verifierType = req.user.role === 'farmer' ? 'Farmer' : 'Buyer';
+
+    const driver = await Driver.findOne({ phoneNumber: driverPhone });
+    if (!driver) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Driver not found with this phone number' 
+      });
+    }
+
+    const request = await DeliveryRequest.findOne({
+      _id: requestId,
+      assignedDriver: driver._id
+    });
+
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No delivery request found for this driver' 
+      });
+    }
+
+    // Create verification tracking entry
+    const verificationStatus = req.user.role === 'farmer' ? 'farmer_verifying_driver' : 'buyer_verifying_driver';
+    
+    await DeliveryTracking.create({
+      deliveryRequestId: requestId,
+      driverId: driver._id,
+      status: verificationStatus,
+      verification: {
+        method: verificationType,
+        verifiedBy: verifierId,
+        verifierType: verifierType,
+        driverPhone: driverPhone,
+        driverLicense: driver.driversLicenseNumber,
+        verificationTime: new Date(),
+        success: true
+      },
+      notes: `Identity verified by ${req.user.role}`,
+      source: `${req.user.role}_confirmation`
+    });
+
+    res.json({
+      success: true,
+      driver: {
+        name: `${driver.firstName} ${driver.surname}`,
+        licenseNumber: driver.driversLicenseNumber,
+        vehicleNumber: driver.vehicleNumber,
+        phone: driver.phoneNumber,
+        verified: true
+      },
+      message: 'Driver identity verified successfully'
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.confirmTransferComplete = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const { requestId, driverPhone } = req.body;
+
+    // Verify driver and request
+    const driver = await Driver.findOne({ phoneNumber: driverPhone });
+    if (!driver) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Driver not found' 
+      });
+    }
+
+    const request = await DeliveryRequest.findOne({
+      _id: requestId,
+      farmerId,
+      assignedDriver: driver._id
+    });
+
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Delivery request not found or access denied' 
+      });
+    }
+
+    // Create transfer completion tracking
+    await DeliveryTracking.create({
+      deliveryRequestId: requestId,
+      driverId: driver._id,
+      status: 'transfer_confirmed',
+      notes: 'Farmer confirmed transfer of produce to driver',
+      source: 'farmer_confirmation'
+    });
+
+    // Notify all parties
+    const notifications = [
+      // Notify driver
+      NotificationService.create({
+        recipientId: driver._id,
+        recipientType: 'Driver',
+        type: 'transfer_confirmed',
+        title: 'Transfer Confirmed',
+        message: 'Farmer has confirmed transfer. Please confirm receipt and proceed to delivery.',
+        relatedId: requestId,
+        relatedType: 'DeliveryRequest',
+        actions: [{
+          label: 'Confirm Receipt',
+          action: 'confirm_receipt',
+          url: `/deliveries/${requestId}/confirm-receipt`
+        }]
+      }),
+      
+      // Notify buyer
+      NotificationService.create({
+        recipientId: request.buyerId,
+        recipientType: 'Buyer',
+        type: 'transfer_confirmed',
+        title: 'Pickup in Progress',
+        message: 'Your produce is being loaded. Delivery is on its way!',
+        relatedId: requestId,
+        relatedType: 'DeliveryRequest'
+      })
+    ];
+
+    await Promise.all(notifications);
+
+    res.json({
+      success: true,
+      message: 'Transfer confirmed successfully. Driver and buyer have been notified.'
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.bid_accepted',
+      title: 'Bid Accepted!',
+      message: `Your bid for ${bid.produceId.name} has been accepted. Please pay the platform fee to proceed.`,
+      relatedId: trade._id,
+      relatedType: 'Trade',
+      actions: [{
+        label: 'Pay Platform Fee',
+        action: 'pay_platform_fee',
+        url: `/trades/${trade._id}/payment`
+      }]
+    });
+
+    res.json({ 
+      success: true, 
+      data: {
+        trade,
+        rejectedBidsCount: rejectedBids.modifiedCount
+      },
+      message: 'Bid accepted successfully. Buyer has been notified to pay platform fee.' 
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.rejectBid = async (req, res) => {
+  try {
+    const farmerId = req.user.sub || req.user.id;
+    const bidId = req.params.id;
+    const { reason } = req.body;
+
+    const bid = await Bid.findById(bidId)
+      .populate('produceId')
+      .populate('buyerId');
+      
+    if (!bid || String(bid.produceId.farmerId) !== farmerId) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Bid not found or access denied' 
+      });
+    }
+
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Bid is no longer pending' 
+      });
+    }
+
+    bid.status = 'rejected';
+    bid.rejectedAt = new Date();
+    bid.rejectionReason = reason || 'Farmer declined the bid';
+    await bid.save();
+
+    // Update produce active bids count
+    await Produce.findByIdAndUpdate(bid.produceId._id, { 
+      $inc: { activeBidsCount: -1 }
+    });
+
+    // Send notification to buyer
+    await NotificationService.create({
+      recipientId: bid.buyerId._id,
+      recipientType: 'Buyer',
+      type: '

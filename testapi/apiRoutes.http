@@ -118,7 +118,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGI0NDY1Y
 ###
 
 ### list delivery requests
-GET http://localhost:3459/api/drivers/requests
+GET http://localhost:3459/api/drivers/requests/DRIVER_DEMO/quoutes
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGI0NDY1Y2Q3YmMyNmJmZjQ3YmIyNmQiLCJyb2xlIjoidXNlciIsInN1Yk1vZGVsIjoiVXNlciIsImlhdCI6MTc1NzE4MTIyOCwiZXhwIjoxNzU5NzczMjI4fQ.3R_xMMafG1ixEhAUQNzNqjgsRimo1o8I1AcYkLrOdQk
 
 ###

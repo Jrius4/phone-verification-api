@@ -1,0 +1,11 @@
+const expressD = require('express');
+const { driverAuth: dAuth } = require('../middleware/auth');
+const dr = require('../controllers/driverRequests');
+const driverReqRouter = expressD.Router();
+driverReqRouter.get('/open', dAuth, dr.openRequests);
+driverReqRouter.post('/:id/quote', dAuth, dr.submitQuote);
+driverReqRouter.get('/:id/quotes/my', dAuth, dr.getMyQuote);
+driverReqRouter.get('/quotes', dAuth, dr.listMyQuotes);
+driverReqRouter.patch('/quotes/:id/withdraw', dAuth, dr.withdrawQuote);
+driverReqRouter.post('/quotes/:id/confirm', dAuth, dr.confirmAcceptedQuote);
+module.exports = driverReqRouter;

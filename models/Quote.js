@@ -6,6 +6,7 @@ const QuoteSchema = new S({
     jobId: { type: T.ObjectId, ref: 'DriverJob' }, // for quoting on seeded jobs (optional)
     driverId: { type: T.ObjectId, ref: 'Driver', required: true },
     amount: { type: Number, required: true }, // UGX
+    currency:{ type: String, default: 'UGX' },
     etaMinutes: { type: Number, required: true },
     note: { type: String },
     status: { type: String, enum: ['pending', 'accepted', 'rejected', 'withdrawn'], default: 'pending' },

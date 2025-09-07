@@ -1,0 +1,9 @@
+const expressB = require('express');
+const { auth: authMw2 } = require('../middleware/auth');
+const br = require('../controllers/buyerRequestsController');
+const buyerRouter = expressB.Router();
+buyerRouter.post('/', authMw2, br.createRequest);
+buyerRouter.get('/:id', authMw2, br.getRequest);
+buyerRouter.get('/:id/quotes', authMw2, br.listQuotes);
+buyerRouter.post('/:id/quotes/:quoteId/accept', authMw2, br.acceptQuote);
+module.exports = buyerRouter;
