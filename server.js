@@ -5,6 +5,11 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/auth');
 const driverRoutes = require('./routes/driver');
 const jobsRouter = require('./routes/jobs');
+const products = require('./routes/products');
+const buyerReqs = require('./routes/buyerRequests');
+const driverReqs = require('./routes/driverRequests');
+const payments = require('./routes/payments');
+const nfc = require('./routes/nfc');
 const {Server} = require('socket.io');
 
 
@@ -37,6 +42,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/drivers', driverRoutes);
 // api routes
 app.use('/api/driver/jobs', jobsRouter);
+
+app.use('/api/products', products);
+app.use('/api/buyer/requests', buyerReqs);
+app.use('/api/driver/requests', driverReqs);
+app.use('/api/payments', payments);
+app.use('/api/nfc', nfc);
 
 // socket logging (optional)
 io.on('connection', socket => {

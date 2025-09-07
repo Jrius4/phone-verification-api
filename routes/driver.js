@@ -27,9 +27,9 @@ router.post('/register', validateRequest(driverRegistrationSchema), registerDriv
 router.get('/stats', getDriverStats);
 
 // requests
-router.post("/requests",auth,validateRequest(requestSchema), saveDeliverRequest);
-router.get("/requests",auth,requireAdminOrModerator, getAllDeliveryRequests);
-router.get("/requests/:id/quoutes",auth, getDeliveryRequests);
+// router.post("/requests",auth,validateRequest(requestSchema), saveDeliverRequest);
+// router.get("/requests",auth,requireAdminOrModerator, getAllDeliveryRequests);
+// router.get("/requests/:id/quoutes",auth, getDeliveryRequests);
 
 // Protected routes - admin/moderator only
 router.get('/',auth,requireAdminOrModerator, getDrivers);
