@@ -15,7 +15,7 @@ const DriverJobSchema = new Schema({
     required: true
   },
   buyer_name: { type: String, required: true },
-  buyer_phone: { type: String, required: true },
+  buyer_phone: { type: String, required: false },
   farmer_name: { type: String, required: true },
   commodity: { type: String, required: true },
   weight_kg: { type: Number },

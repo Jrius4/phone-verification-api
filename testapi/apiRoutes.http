@@ -60,14 +60,14 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjYxMjUyLCJleHAiOjE3NTk4NTMyNTJ9.PN_JaLfi1rmkDMxtr_QpfQNDsrgdB2o48EXzulgM51k
 
 {
-  "produceType": "Fresh Apples",
-  "description": "Crisp and juicy apples from our orchard.",
+  "produceType": "Yellow Banana",
+  "description": "Masaka banana goodies.",
   "quantity": 100,
   "reservePrice": 2.5,
   "unit": "Kg",
   "pickup": {
-    "name": "John's Farm",
-    "address": "123 Farm Lane, Countryside",
+    "name": "Jeshar's Farm",
+    "address": "123 WHite lotus Lane, Countryside",
     "lat": 34.0522,
     "lng": -118.2437
   }
@@ -91,26 +91,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhN
 ##### Buyer bids on lot
 #### POST /api/products/lots/{lotId}/bids
 ##### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VlNjkyMjY0NzkzYTY5YjE0OTEiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTcyNTk2NzAsImV4cCI6MTc1OTg1MTY3MH0.vZz8QFJDVT0pOuAU6XFxJue1fQZV_Rh0Qnhhv3NLVCI
-POST http://localhost:3459/api/products/lots/68bda287e1857517bdd670f8/bids
+POST http://localhost:3459/api/products/lots/68bdfa27544dfc2c4867b472/bids
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VlNjkyMjY0NzkzYTY5YjE0OTEiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTcyNTk2NzAsImV4cCI6MTc1OTg1MTY3MH0.vZz8QFJDVT0pOuAU6XFxJue1fQZV_Rh0Qnhhv3NLVCI
 Content-Type: application/json
 
 {
-  "amount": 25,
-  "note": "Looking forward to these apples!"
+  "amount": 23450,
+  "note": "Looking forward to these yellow matooke!"
 }
 
 ##### Farmer gets bids on lot
 ##### GET /api/products/lots/{lotId}/bids
-GET http://localhost:3459/api/products/lots/68bda287e1857517bdd670f8/bids
+GET http://localhost:3459/api/products/lots/68bdfa27544dfc2c4867b472/bids
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjYxMjUyLCJleHAiOjE3NTk4NTMyNTJ9.PN_JaLfi1rmkDMxtr_QpfQNDsrgdB2o48EXzulgM51k
 
 ##### Farmer accepts bid on lot
 ##### POST /api/products/lots/{lotId}/bids/{bidId}/accept
-POST http://localhost:3459/api/products/lots/68bda287e1857517bdd670f8/bids/68bda8c605b26abfdb94d7d8/accept
+POST http://localhost:3459/api/products/lots/68bdfa27544dfc2c4867b472/bids/68bdfb2c544dfc2c4867b477/accept
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjYxMjUyLCJleHAiOjE3NTk4NTMyNTJ9.PN_JaLfi1rmkDMxtr_QpfQNDsrgdB2o48EXzulgM51k
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjgxMzg2LCJleHAiOjE3NTk4NzMzODZ9.dba1wOVwSALfYuEuX7HMC_9fFFuCmi3-Q5X0-pxE1eQ
 
 ##### (PaymentIntent type=product, status=authorized)
 ##### Farmer rejects bid on lot
@@ -132,21 +132,24 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5M
 
 ##### Driver places bid (quoute) on delivery request
 ##### POST /api/driver/requests/{id}/quote
-POST http://localhost:3459/api/driver/requests/68bdd0060e86a0c54fc374da/quote
+POST http://localhost:3459/api/driver/requests/68bdfc9f544dfc2c4867b48a/quote
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5MDIzMTU2Mzg5NzFmZmRjNzciLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcyNjg1NTYsImV4cCI6MTc1OTg2MDU1Nn0.HB1bRnepOLHny8MYpHJyaQeQysrdOmzovx3B0GhirXQ
 
 {
-  "amount":34000,
-  "etaMinutes": 546,
-  "note":"I can transport apples"
+  "amount":4360,
+  "etaMinutes": 75,
+  "note":"I can transport good mango apples"
 }
 
 ##### Buyer gets all bids on delivery request
 ##### Buyer accepts bid on delivery request
 ##### POST /api/buyer/requests/{id}/quotes/{quoteId}/accept
-
 ##### Creates DriverJob with codes (farmerCode, buyerCode) and status=awaiting_driver_confirm.
+POST http://localhost:3459/api/buyer/requests/68bdfc9f544dfc2c4867b48a/quotes/68bdfd53544dfc2c4867b492/accept
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VlNjkyMjY0NzkzYTY5YjE0OTEiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTcyNTk2NzAsImV4cCI6MTc1OTg1MTY3MH0.vZz8QFJDVT0pOuAU6XFxJue1fQZV_Rh0Qnhhv3NLVCI
+
 ##### PaymentIntent type=transport, status=authorized
 ##### Buyer rejects bid on delivery request
 ##### Buyer authorizes payment for delivery (escrow)

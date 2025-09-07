@@ -3,6 +3,8 @@ const DeliveryRequest2 = require('../models/DeliveryRequest');
 const Quote = require('../models/Quote');
 const DriverJob = require('../models/DriverJob');
 const PaymentIntent2 = require('../models/PaymentIntent');
+const Farmer = require("./../models/Farmer");
+const Buyer = require("./../models/Buyer");
 const { PaymentService: PS } = require('../utils/payments');
 
 exports.createRequest = async (req, res) => {
@@ -34,14 +36,17 @@ exports.acceptQuote = async (req, res) => {
     const request = await DeliveryRequest2.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
     if (String(request.buyerId) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
-    if (request.status !== 'open') return res.status(400).json({ message: 'Request is not open' });
+    // if (request.status !== 'open') return res.status(400).json({ message: 'Request is not open' });
 
-    const quote = await Quote.findOne({ _id: req.params.qid || req.params.quoteId, requestId: request._id, status: 'pending' }).populate('driverId');
+    // const quote = await Quote.findOne({ _id: req.params.qid || req.params.quoteId, requestId: request._id, status: 'pending' }).populate('driverId');
+    const quote = await Quote.findOne({ _id: req.params.qid || req.params.quoteId, requestId: request._id }).populate('driverId');
     if (!quote) return res.status(404).json({ message: 'Quote not found or not pending' });
-
+    // farmer details
+    const buyer = await Buyer.findById(request.buyerId)
+    const farmer = await Farmer.findById(request.farmerId)
     // Create job in awaiting_driver_confirm
     const job = await DriverJob.create({
-        buyer_name: '', buyer_phone: '', farmer_name: '',
+        buyer_name: `${buyer.firstName} ${buyer.lastName}`, buyer_phone: '', farmer_name: `${farmer.firstName} ${farmer.lastName}`,
         commodity: request.produceType, weight_kg: request.unit.toLowerCase() === 'kg' ? request.quantity : undefined,
         payment_amount: quote.amount,
         pickup_location: request.pickup, dropoff_location: request.dropoff,
@@ -50,7 +55,7 @@ exports.acceptQuote = async (req, res) => {
         accepted_by: quote.driverId._id,
         accepted_at: new Date(),
         buyerId: request.buyerId,
-        farmerId: request.pickupOwnerId || null,
+        farmerId: request.farmerId || null,
         productLotId: request.lotId || null,
         farmerCode: String(Math.floor(1000 + Math.random() * 9000)),
         buyerCode: String(Math.floor(1000 + Math.random() * 9000)),
