@@ -54,7 +54,8 @@ exports.withdrawQuote = async (req, res) => {
 };
 
 exports.confirmAcceptedQuote = async (req, res) => {
-    const Quote3 = require('../models/Quote'); const DriverJob3 = require('../models/DriverJob');
+    try{
+        const Quote3 = require('../models/Quote'); const DriverJob3 = require('../models/DriverJob');
     const q = await Quote3.findById(req.params.id);
     if (!q || String(q.driverId) !== String(req.user.sub)) return res.status(404).json({ message: 'Quote not found' });
     if (q.status !== 'accepted') return res.status(400).json({ message: 'Quote not accepted by buyer' });
@@ -63,4 +64,8 @@ exports.confirmAcceptedQuote = async (req, res) => {
     job.status = 'active'; await job.save();
     try { req.io?.emit('job:active', { jobId: job._id.toString() }); } catch { }
     res.json({ success: true });
+    }catch(e){
+        console.error('driver confirms',{e})
+       res.status(403).json({ message:e.message||"Something",e });
+    }
 };

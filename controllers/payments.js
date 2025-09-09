@@ -5,7 +5,8 @@ const DriverTag = require('../models/DriverTag');
 const { PaymentService: PaySvc } = require('../utils/payments');
 
 exports.releaseTransportByNfc = async (req, res) => {
-    const schema = Joi4.object({ tagId: Joi4.string().allow('', null), ndefText: Joi4.string().allow('', null) });
+   try{
+     const schema = Joi4.object({ tagId: Joi4.string().allow('', null), ndefText: Joi4.string().allow('', null) });
     const { tagId, ndefText } = await schema.validateAsync(req.body);
     const job = await DriverJob5.findById(req.params.jobId);
     if (!job) return res.status(404).json({ message: 'Job not found' });
@@ -23,4 +24,7 @@ exports.releaseTransportByNfc = async (req, res) => {
     job.status = 'completed'; await job.save();
     try { req.io?.emit('job:completed', { jobId: job._id.toString() }); } catch { }
     res.json({ success: true });
+   }catch(e){
+    res.status(500).json({success:false,message:e.message || 'Something want wrong'})
+   }
 };

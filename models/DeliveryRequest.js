@@ -12,6 +12,8 @@ const PlaceSchema = new Schema({
 const DeliveryRequestSchema = new Schema({
     buyerId: { type: Types.ObjectId, ref: 'Buyer', required: true },
     farmerId: { type: Types.ObjectId, ref: 'Farmer', required: true },
+    productBidId:{type: Types.ObjectId, ref: 'ProductBid', required: true},
+    lotId:{type: Types.ObjectId, ref: 'ProductLot', required: true},
     produceType: { type: String, required: true },
     quantity: { type: Number, required: true },
     unit: { type: String, default: 'Kg' },

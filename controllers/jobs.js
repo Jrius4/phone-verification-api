@@ -1,5 +1,7 @@
 const DriverJob4 = require('../models/DriverJob');
 const PaymentIntent3 = require('../models/PaymentIntent');
+const Joi2 = require('joi');
+
 
 exports.listDriverJobs = async (req, res) => {
     const status = (req.query.status || 'available').toLowerCase();
@@ -34,26 +36,41 @@ exports.tracking = async (req, res) => {
 };
 
 exports.pickupConfirm = async (req, res) => {
-    const job = await DriverJob4.findById(req.params.id);
-    if (!job) return res.status(404).json({ message: 'Job not found' });
-    if (String(job.accepted_by) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
-    const code = String(req.body.code || '');
-    if (code !== String(job.farmerCode)) return res.status(400).json({ message: 'Invalid farmer code' });
-    const pi = await PaymentIntent3.findOne({ type: 'product', jobId: job.productLotId, status: 'authorized' });
-    if (pi) { pi.status = 'released'; await pi.save(); }
-    try { req.io?.emit('pickup:confirmed', { jobId: job._id.toString() }); } catch { }
-    res.json({ success: true });
+    try{
+        const schema = Joi2.object({code:Joi2.string().required()});
+        const {code} = await schema.validateAsync(req.body);
+        console.log('farmer code',{code});
+        const job = await DriverJob4.findById(req.params.id);
+        if (!job) return res.status(404).json({ message: 'Job not found' });
+        if (String(job.accepted_by) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
+        
+        if (code !== String(job.farmerCode)) return res.status(400).json({ message: 'Invalid farmer code' });
+        const pi = await PaymentIntent3.findOne({ type: 'product', jobId: job.productLotId, status: 'authorized' });
+        if (pi) { pi.status = 'released'; await pi.save(); }
+        try { req.io?.emit('pickup:confirmed', { jobId: job._id.toString() }); } catch { }
+        res.json({ success: true });
+    }catch(e){
+        res.status(500).json({
+            success:false,
+            message:e.message});
+    }
 };
 
 exports.deliveryConfirm = async (req, res) => {
+   try{
+     const schema = Joi2.object({code:Joi2.string().required()});
+    const {code} = await schema.validateAsync(req.body);
     const job = await DriverJob4.findById(req.params.id);
     if (!job) return res.status(404).json({ message: 'Job not found' });
     if (String(job.accepted_by) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
-    const code = String(req.body.code || '');
+   
     if (code !== String(job.buyerCode)) return res.status(400).json({ message: 'Invalid buyer code' });
     const pi = await PaymentIntent3.findOne({ type: 'transport', jobId: job._id, status: 'authorized' });
     if (pi) { pi.status = 'released'; await pi.save(); }
     job.status = 'completed'; await job.save();
     try { req.io?.emit('job:completed', { jobId: job._id.toString() }); } catch { }
     res.json({ success: true });
+   }catch(e){
+    res.status(500).json({success:false,message:e.message || "Something happened"});
+   }
 };

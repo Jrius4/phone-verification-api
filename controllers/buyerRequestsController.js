@@ -33,13 +33,13 @@ exports.listQuotes = async (req, res) => {
 };
 
 exports.acceptQuote = async (req, res) => {
-    const request = await DeliveryRequest2.findById(req.params.id);
+    try{
+        const request = await DeliveryRequest2.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
     if (String(request.buyerId) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
-    // if (request.status !== 'open') return res.status(400).json({ message: 'Request is not open' });
+    if (request.status !== 'open') return res.status(400).json({ message: 'Request is not open' });
 
-    // const quote = await Quote.findOne({ _id: req.params.qid || req.params.quoteId, requestId: request._id, status: 'pending' }).populate('driverId');
-    const quote = await Quote.findOne({ _id: req.params.qid || req.params.quoteId, requestId: request._id }).populate('driverId');
+    const quote = await Quote.findOne({ _id: req.params.qid || req.params.quoteId, requestId: request._id, status: 'pending' }).populate('driverId');
     if (!quote) return res.status(404).json({ message: 'Quote not found or not pending' });
     // farmer details
     const buyer = await Buyer.findById(request.buyerId)
@@ -51,6 +51,7 @@ exports.acceptQuote = async (req, res) => {
         payment_amount: quote.amount,
         pickup_location: request.pickup, dropoff_location: request.dropoff,
         instructions: request.notes || '',
+        acceptedQuote:quote._id,
         status: 'awaiting_driver_confirm',
         accepted_by: quote.driverId._id,
         accepted_at: new Date(),
@@ -71,4 +72,8 @@ exports.acceptQuote = async (req, res) => {
 
     try { req.io?.emit('quote:accepted', { requestId: request._id.toString(), driverId: quote.driverId._id.toString(), jobId: job._id.toString() }); } catch { }
     res.json({ jobId: job._id });
+    }catch(e){
+        console.error('Buyer Accepted Bid:',{e})
+        res.status(500).json({message:e.message || "Something happen!"})
+    }
 };

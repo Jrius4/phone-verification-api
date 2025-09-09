@@ -29,6 +29,7 @@ const DriverJobSchema = new Schema({
   farmerId: { type: Types.ObjectId, ref: 'Farmer' },
   productLotId: { type: Types.ObjectId, ref: 'ProductLot' },
   accepted_by: { type: Types.ObjectId, ref: 'Driver', default: null },
+  acceptedQuote:{ type: Types.ObjectId, ref: 'Quote', default: null },
    accepted_at: Date,
 
     // Checkpoint codes
