@@ -6,21 +6,22 @@ POST http://localhost:3459/api/auth/driver/start
 Content-Type: application/json
 
 {
-  "phoneNumber": "+256700000018"
+  "phoneNumber": "+256700000010"
 }
 
 ### POST /api/auth/driver/verify → { token, role: 'driver', user }
-
+##### token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTQiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTc1NTUyMTUsImV4cCI6MTc2MDE0NzIxNX0.ZVwnMMSdESaSr0J_H615zeQabczh5VJONMN22zp511Y
 POST http://localhost:3459/api/auth/driver/verify
 Content-Type: application/json
 
 {
-  "request_id": "68bdc99f4255bafaa9fb9c09",
-   "code": "151389"
+  "request_id": "68c229ef1af62fa537335ea9",
+   "code": "589254"
 }
 
-### Buyer Auth
+### Farmer Auth
 ### POST /api/auth/{driver|farmer|buyer}/login → { token, role, user }
+###### token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZGQ0ZjYzOTczNTYzZWMxNGMiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3NTU0ODQ5LCJleHAiOjE3NjAxNDY4NDl9.uzFsFzhMyC58LkS0KTG8bkEFuAvE-lKHl5k1PZeUc3Y
 POST http://localhost:3459/api/auth/farmer/login
 Content-Type: application/json
 
@@ -30,9 +31,9 @@ Content-Type: application/json
 }
 
 
-### Farmer Auth
+### Buyer Auth
 ### email:buyer001@fty.com password: buyer123
-### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VlNjkyMjY0NzkzYTY5YjE0OTEiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTcyNTk2NzAsImV4cCI6MTc1OTg1MTY3MH0.vZz8QFJDVT0pOuAU6XFxJue1fQZV_Rh0Qnhhv3NLVCI
+### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYyYWQ0ZjYzOTczNTYzZWMxNjIiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTc1NTQ2MTcsImV4cCI6MTc2MDE0NjYxN30.sLXxeBw-LHrT5cKNRt50FH3U-wwBfwKMwfgnqMZB6KA
 POST http://localhost:3459/api/auth/buyer/login
 Content-Type: application/json
 
@@ -52,19 +53,19 @@ Content-Type: application/json
 
 ### Farmer Routes
 ##### Farmer create lot
-#### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjYxMjUyLCJleHAiOjE3NTk4NTMyNTJ9.PN_JaLfi1rmkDMxtr_QpfQNDsrgdB2o48EXzulgM51k
+#### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYyYWQ0ZjYzOTczNTYzZWMxNjIiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTc1NTQ2MTcsImV4cCI6MTc2MDE0NjYxN30.sLXxeBw-LHrT5cKNRt50FH3U-wwBfwKMwfgnqMZB6KA
 ### POST /api/products/lots
 
 POST http://localhost:3459/api/products/lots
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjYxMjUyLCJleHAiOjE3NTk4NTMyNTJ9.PN_JaLfi1rmkDMxtr_QpfQNDsrgdB2o48EXzulgM51k
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZGQ0ZjYzOTczNTYzZWMxNGMiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3NTU0ODQ5LCJleHAiOjE3NjAxNDY4NDl9.uzFsFzhMyC58LkS0KTG8bkEFuAvE-lKHl5k1PZeUc3Y
 
 {
-  "produceType": "Eggs",
-  "description": "local chicken eggs.",
-  "quantity": 300,
-  "reservePrice": 12000,
-  "unit": "Trays",
+  "produceType": "Coffee",
+  "description": "Robusta.",
+  "quantity": 349,
+  "reservePrice": 18000,
+  "unit": "Kg",
   "pickup": {
     "name": "Berna's Farm",
     "address": "123 West Lake, Countryside",
@@ -79,7 +80,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhN
 
 GET http://localhost:3459/api/products/lots/open
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjYxMjUyLCJleHAiOjE3NTk4NTMyNTJ9.PN_JaLfi1rmkDMxtr_QpfQNDsrgdB2o48EXzulgM51k
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZGQ0ZjYzOTczNTYzZWMxNGMiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3NTU0ODQ5LCJleHAiOjE3NjAxNDY4NDl9.uzFsFzhMyC58LkS0KTG8bkEFuAvE-lKHl5k1PZeUc3Y
 
 
 ##### GET /api/products/lots?status=open
@@ -90,10 +91,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhN
 
 ##### Buyer bids on lot
 #### POST /api/products/lots/{lotId}/bids
-##### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VlNjkyMjY0NzkzYTY5YjE0OTEiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTcyNTk2NzAsImV4cCI6MTc1OTg1MTY3MH0.vZz8QFJDVT0pOuAU6XFxJue1fQZV_Rh0Qnhhv3NLVCI
+##### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYyYWQ0ZjYzOTczNTYzZWMxNjIiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTc1NTQ2MTcsImV4cCI6MTc2MDE0NjYxN30.sLXxeBw-LHrT5cKNRt50FH3U-wwBfwKMwfgnqMZB6KA
 ##### bid id 68bf83a1705cd645f082a386
-POST http://localhost:3459/api/products/lots/68bfa157d7fc6e53a0124684/bids
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VlNjkyMjY0NzkzYTY5YjE0OTEiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTcyNTk2NzAsImV4cCI6MTc1OTg1MTY3MH0.vZz8QFJDVT0pOuAU6XFxJue1fQZV_Rh0Qnhhv3NLVCI
+POST http://localhost:3459/api/products/lots/68c2283c1af62fa537335e8a/bids
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYyYWQ0ZjYzOTczNTYzZWMxNjIiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTc1NTQ2MTcsImV4cCI6MTc2MDE0NjYxN30.sLXxeBw-LHrT5cKNRt50FH3U-wwBfwKMwfgnqMZB6KA
 Content-Type: application/json
 
 {
@@ -105,15 +106,15 @@ Content-Type: application/json
 
 ##### Farmer gets bids on lot
 ##### GET /api/products/lots/{lotId}/bids
-GET http://localhost:3459/api/products/lots/68bfa157d7fc6e53a0124684/bids
+GET http://localhost:3459/api/products/lots/68c2283c1af62fa537335e8a/bids
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjYxMjUyLCJleHAiOjE3NTk4NTMyNTJ9.PN_JaLfi1rmkDMxtr_QpfQNDsrgdB2o48EXzulgM51k
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZGQ0ZjYzOTczNTYzZWMxNGMiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3NTU0ODQ5LCJleHAiOjE3NjAxNDY4NDl9.uzFsFzhMyC58LkS0KTG8bkEFuAvE-lKHl5k1PZeUc3Y
 
 ##### Farmer accepts bid on lot
 ##### POST /api/products/lots/{lotId}/bids/{bidId}/accept
-POST http://localhost:3459/api/products/lots/68bfa157d7fc6e53a0124684/bids/68bfa278a5831c4eb868ebd3/accept
+POST http://localhost:3459/api/products/lots/68c2283c1af62fa537335e8a/bids/68c229641af62fa537335e97/accept
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhNjkyMjY0NzkzYTY5YjE0NDEiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3MjgxMzg2LCJleHAiOjE3NTk4NzMzODZ9.dba1wOVwSALfYuEuX7HMC_9fFFuCmi3-Q5X0-pxE1eQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZGQ0ZjYzOTczNTYzZWMxNGMiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU3NTU0ODQ5LCJleHAiOjE3NjAxNDY4NDl9.uzFsFzhMyC58LkS0KTG8bkEFuAvE-lKHl5k1PZeUc3Y
 
 ##### (PaymentIntent type=product, status=authorized)
 ##### Farmer rejects bid on lot
@@ -126,41 +127,41 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VhN
 
 
 ### Buyer -> Driver (Delivery) Bidding
-#### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5MDIzMTU2Mzg5NzFmZmRjNzciLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcyNjg1NTYsImV4cCI6MTc1OTg2MDU1Nn0.HB1bRnepOLHny8MYpHJyaQeQysrdOmzovx3B0GhirXQ
+#### eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTQiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTc1NTUyMTUsImV4cCI6MTc2MDE0NzIxNX0.ZVwnMMSdESaSr0J_H615zeQabczh5VJONMN22zp511Y
 ##### Driver gets all delivery requests
 ##### GET /api/driver/requests/open?nearLat=&nearLng=&within_km=50
 GET http://localhost:3459/api/driver/requests/open?nearLat=&nearLng=&within_km=50
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5MDIzMTU2Mzg5NzFmZmRjNzciLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcyNjg1NTYsImV4cCI6MTc1OTg2MDU1Nn0.HB1bRnepOLHny8MYpHJyaQeQysrdOmzovx3B0GhirXQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTQiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTc1NTUyMTUsImV4cCI6MTc2MDE0NzIxNX0.ZVwnMMSdESaSr0J_H615zeQabczh5VJONMN22zp511Y
 
 ##### Driver places bid (quoute) on delivery request
 ##### POST /api/driver/requests/{id}/quote
-POST http://localhost:3459/api/driver/requests/68bfa2dfa5831c4eb868ebe1/quote
+POST http://localhost:3459/api/driver/requests/68c229c91af62fa537335ea6/quote
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5MDIzMTU2Mzg5NzFmZmRjNzciLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcyNjg1NTYsImV4cCI6MTc1OTg2MDU1Nn0.HB1bRnepOLHny8MYpHJyaQeQysrdOmzovx3B0GhirXQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTQiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTc1NTUyMTUsImV4cCI6MTc2MDE0NzIxNX0.ZVwnMMSdESaSr0J_H615zeQabczh5VJONMN22zp511Y
 
 {
   "amount":25000,
   "etaMinutes": 20,
-  "note":"I can transport Eggs"
+  "note":"I can transport Coffee"
 }
 
 ##### Buyer gets all bids on delivery request
 ##### Buyer accepts bid on delivery request
 ##### POST /api/buyer/requests/{id}/quotes/{quoteId}/accept
 ##### Creates DriverJob with codes (farmerCode, buyerCode) and status=awaiting_driver_confirm.
-POST http://localhost:3459/api/buyer/requests/68bfa2dfa5831c4eb868ebe1/quotes/68bfa398a5831c4eb868ebe9/accept
+POST http://localhost:3459/api/buyer/requests/68c229c91af62fa537335ea6/quotes/68c22a781af62fa537335eb4/accept
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjM2VlNjkyMjY0NzkzYTY5YjE0OTEiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTcyNTk2NzAsImV4cCI6MTc1OTg1MTY3MH0.vZz8QFJDVT0pOuAU6XFxJue1fQZV_Rh0Qnhhv3NLVCI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYyYWQ0ZjYzOTczNTYzZWMxNjIiLCJyb2xlIjoiYnV5ZXIiLCJzdWJNb2RlbCI6IlVzZXIiLCJpYXQiOjE3NTc1NTQ2MTcsImV4cCI6MTc2MDE0NjYxN30.sLXxeBw-LHrT5cKNRt50FH3U-wwBfwKMwfgnqMZB6KA
 
 ##### PaymentIntent type=transport, status=authorized
 ##### Buyer rejects bid on delivery request
 ##### Buyer authorizes payment for delivery (escrow)
 ##### Driver confirms the bid and starts delivery (job)-> active
 ##### POST /api/driver/requests/quotes/{quoteId}/confirm → job active
-POST http://localhost:3459/api/driver/requests/quotes/68bfa398a5831c4eb868ebe9/confirm
+POST http://localhost:3459/api/driver/requests/quotes/68c22a781af62fa537335eb4/confirm
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5MDIzMTU2Mzg5NzFmZmRjNzciLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcyNjg1NTYsImV4cCI6MTc1OTg2MDU1Nn0.HB1bRnepOLHny8MYpHJyaQeQysrdOmzovx3B0GhirXQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTQiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTc1NTUyMTUsImV4cCI6MTc2MDE0NzIxNX0.ZVwnMMSdESaSr0J_H615zeQabczh5VJONMN22zp511Y
 
 
 ####### 
@@ -169,22 +170,22 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5M
 ### Pickup -> Deliver (Escrow) Releases
 ##### Pickup at farmer location -> Driver confirms pickup (Enters farmer code)-> Escrow payment for delivery is released to driver
 ##### POST /api/driver/jobs/{jobId}/pickup-confirm
-POST http://localhost:3459/api/driver/jobs/68bfa3bea5831c4eb868ebf1/pickup-confirm
+POST http://localhost:3459/api/driver/jobs/68c22a911af62fa537335ebc/pickup-confirm
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5MDIzMTU2Mzg5NzFmZmRjNzciLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcyNjg1NTYsImV4cCI6MTc1OTg2MDU1Nn0.HB1bRnepOLHny8MYpHJyaQeQysrdOmzovx3B0GhirXQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTQiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTc1NTUyMTUsImV4cCI6MTc2MDE0NzIxNX0.ZVwnMMSdESaSr0J_H615zeQabczh5VJONMN22zp511Y
 
 {
-  "code": "1670"
+  "code": "5293"
 }
 
 ######## Driver confirms delivery (Enters buyer code) -> Escrow payment for delivery is released to driver
 ##### POST /api/driver/jobs/{jobId}/delivery-confirm
-POST http://localhost:3459/api/driver/jobs/68bfa3bea5831c4eb868ebf1/delivery-confirm
+POST http://localhost:3459/api/driver/jobs/68c22a911af62fa537335ebc/delivery-confirm
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGJjNmE5MDIzMTU2Mzg5NzFmZmRjNzciLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTcyNjg1NTYsImV4cCI6MTc1OTg2MDU1Nn0.HB1bRnepOLHny8MYpHJyaQeQysrdOmzovx3B0GhirXQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTQiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTc1NTUyMTUsImV4cCI6MTc2MDE0NzIxNX0.ZVwnMMSdESaSr0J_H615zeQabczh5VJONMN22zp511Y
 
 {
-  "code": "5781"
+  "code": "5672"
 }
 
 ##### Delivery at buyer location -> Buyer confirms delivery (Enters driver code) -> Escrow payment for lot is released to farmer

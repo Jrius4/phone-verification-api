@@ -293,7 +293,7 @@ const auth = async (req, res, next) => {
     req.user = user;
     req.phoneNumber = user.phoneNumber;
     req.role = user.role || decoded.role; // Attach role from token if not in user object
-    
+   
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

@@ -6,5 +6,6 @@ productsRouter.post('/lots', authMw, rr('farmer'), pc.createLot);
 productsRouter.get('/lots/open', pc.openLots);
 productsRouter.post('/lots/:id/bids', authMw, rr('buyer'), pc.placeBid);
 productsRouter.get('/lots/:id/bids', authMw, rr('farmer'), pc.listBids);
+productsRouter.get('/lots/:id/buyerbids', authMw, rr('buyer'), pc.listBuyerBids);
 productsRouter.post('/lots/:id/bids/:bidId/accept', authMw, rr('farmer'), pc.acceptBid);
 module.exports = productsRouter;

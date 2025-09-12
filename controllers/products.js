@@ -48,6 +48,15 @@ exports.listBids = async (req, res) => {
     res.json({ bids });
 };
 
+exports.listBuyerBids = async (req, res) => {
+   
+    const lot = await ProductLot.findById(req.params.id);
+    if (!lot) return res.status(404).json({ message: 'Lot not found' });
+    const bids = await ProductBid.find({ lotId: lot._id,buyerId:req.user.sub, status: { $in: ['pending', 'accepted'] } }).populate('buyerId', 'firstName lastName email').sort({ amount: -1 }).lean();
+   
+    res.json({ bids });
+};
+
 exports.acceptBid = async (req, res) => {
     try{
         const lot = await ProductLot.findById(req.params.id);

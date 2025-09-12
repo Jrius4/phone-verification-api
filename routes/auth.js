@@ -85,6 +85,7 @@ router.get('/verification-status/:phoneNumber', verificationStatus);
 // ----- DRIVER OTP START -----
 router.post('/driver/start', validateRequest(phoneSchema), async (req, res) => {
   try {
+    console.log(req);
     const {phoneNumber} = req.body;
     const to = e164(phoneNumber);
 

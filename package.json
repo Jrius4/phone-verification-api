@@ -11,6 +11,7 @@
     "seed:jobs": "node seeders/driverJobSeeder.js",
     "seed:farmers": "node seeders/farmerSeeder.js",
     "seed:buyers": "node seeders/buyerSeeder.js",
+    "seed:drivers": "node seeders/driverSeeder.js",
     "seed:all": "node seeders/seedAll.js",
     "route:list": "node utils/routeList.js",
     "test": "echo \"Error: no test specified\" && exit 1"
