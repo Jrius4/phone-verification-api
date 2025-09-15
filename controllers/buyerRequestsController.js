@@ -16,6 +16,19 @@ exports.createRequest = async (req, res) => {
     res.status(201).json({ id: doc._id, status: doc.status });
 };
 
+exports.listRequests = async (req, res) => {
+     const status = (req.query.status || 'available').toLowerCase();
+        const me = req.user;
+        let query = {};
+        // if (status === 'available') query = { status: 'available' };
+        // else if (status === 'active') query = { status: { $in: ['accepted', 'active', 'awaiting_driver_confirm'] }, accepted_by: me.sub };
+        // else if (status === 'completed') query = { status: 'completed', accepted_by: me.sub };
+        query.buyerId = me.sub;
+        const rows = await DeliveryRequest2.find(query).populate('buyerId').populate('farmerId').populate('lotId').populate('job').populate('productBidId').populate('chosenQuote').sort({ createdAt: -1 }).lean();
+        console.log({rows,query})
+        res.json({ data: rows });
+};
+
 exports.getRequest = async (req, res) => {
     const doc = await DeliveryRequest2.findById(req.params.id).lean();
     if (!doc) return res.status(404).json({ message: 'Not found' });
@@ -28,7 +41,7 @@ exports.listQuotes = async (req, res) => {
     const doc = await DeliveryRequest2.findById(req.params.id).lean();
     if (!doc) return res.status(404).json({ message: 'Not found' });
     if (String(doc.buyerId) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
-    const quotes = await Quote.find({ requestId: doc._id, status: { $in: ['pending', 'accepted'] } }).populate('driverId', 'firstName surname phoneNumber rating vehicleType vehicleNumber').sort({ amount: 1, createdAt: 1 }).lean();
+    const quotes = await Quote.find({ requestId: doc._id, status: { $in: ['pending', 'accepted'] } }).populate('driverId', 'firstName surname phoneNumber rating vehicleType vehicleNumber').populate('requestId').sort({ amount: -1, createdAt: -1 }).lean();
     res.json({ quotes });
 };
 
@@ -62,8 +75,13 @@ exports.acceptQuote = async (req, res) => {
         buyerCode: String(Math.floor(1000 + Math.random() * 9000)),
     });
 
-    request.status = 'awarded'; await request.save();
-    quote.status = 'accepted'; await quote.save();
+    request.status = 'awarded';
+    request.chosenQuote = quote._id;
+    request.job = job._id;
+     await request.save();
+    quote.status = 'accepted'; 
+    quote.jobId = job._id;
+    await quote.save();
     await Quote.updateMany({ requestId: request._id, _id: { $ne: quote._id }, status: 'pending' }, { $set: { status: 'rejected' } });
 
     // Authorize transport escrow for this job

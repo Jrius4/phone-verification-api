@@ -20,6 +20,8 @@ exports.submitQuote = async (req, res) => {
    try{
      const schema = Joi3.object({ amount: Joi3.number().positive().required(), etaMinutes: Joi3.number().integer().positive().required(), note: Joi3.string().allow('', null) });
     const { amount, etaMinutes, note } = await schema.validateAsync(req.body);
+    console.log({amount, etaMinutes, note});
+  
     const request = await DeliveryRequest3.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
     if (request.status !== 'open') return res.status(400).json({ message: 'Request not open for quotes' });
@@ -27,8 +29,10 @@ exports.submitQuote = async (req, res) => {
     if (existing) return res.status(400).json({ message: 'You already have an active quote for this request' });
     const q = await Quote2.create({ requestId: request._id, driverId: req.user.sub, amount, etaMinutes, note });
     try { req.io?.emit('request:quote', { requestId: request._id.toString(), quoteId: q._id.toString(), driverId: req.user.sub }); } catch { }
+    console.error({q});
     res.status(201).json({ quoteId: q._id });
    }catch(e){
+        console.error({e});
         res.status(403).json({ message:e.message||"Something" });
    }
 };
@@ -41,7 +45,8 @@ exports.getMyQuote = async (req, res) => {
 
 exports.listMyQuotes = async (req, res) => {
     const status = (req.query.status || 'pending').toLowerCase();
-    const rows = await Quote2.find({ driverId: req.user.sub, status }).sort({ createdAt: -1 }).lean();
+    const rows = await Quote2.find({ driverId: req.user.sub, status }).populate('jobId').populate('driverId').populate('requestId').sort({ createdAt: -1 }).lean();
+    console.log({rows});
     res.json({ data: rows });
 };
 
@@ -62,6 +67,7 @@ exports.confirmAcceptedQuote = async (req, res) => {
     const job = await DriverJob3.findOne({ accepted_by: q.driverId, payment_amount: q.amount, status: 'awaiting_driver_confirm' }).sort({ createdAt: -1 });
     if (!job) return res.status(404).json({ message: 'Job not found' });
     job.status = 'active'; await job.save();
+    q.status = 'active'; await q.save();
     try { req.io?.emit('job:active', { jobId: job._id.toString() }); } catch { }
     res.json({ success: true });
     }catch(e){
