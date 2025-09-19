@@ -190,3 +190,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhM
 
 ##### Delivery at buyer location -> Buyer confirms delivery (Enters driver code) -> Escrow payment for lot is released to farmer
 ### POST /api/payments/jobs/{jobId}/release-nfc
+
+
+####### get driver jobs
+###token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZGQ0ZjYzOTczNTYzZWMxNGMiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU4MjY1NDI3LCJleHAiOjE3NjA4NTc0Mjd9.ZHibHtM5cj5O2Om58hjzTEFZQtjEPhgpDrCb1V0yTn8
+GET http://localhost:3459/api/farmer/requests
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZGQ0ZjYzOTczNTYzZWMxNGMiLCJyb2xlIjoiZmFybWVyIiwic3ViTW9kZWwiOiJVc2VyIiwiaWF0IjoxNzU4MjY3NzAyLCJleHAiOjE3NjA4NTk3MDJ9.HrE1lzDQQHdBgajnDWilSiICjyonFt9WdsLRL0a5yho
+
+
+##### farmer end driver jobs
+
+# userRole: {
+#     _id: new ObjectId('68c2261dd4f63973563ec14c'),
+#     email: 'farmer001@fty.com',
+#     password: '$2b$12$Sq/YNpEJsr0E.VbvXgvg.uVf3K4wsuLT2BQ0JfGVLsNbXz51zBX0O',
+#     firstName: 'Brian',
+#     lastName: 'Lumu',
+#     isActive: true,
+#     loginAttempts: 0,
+#     createdAt: 2025-09-11T01:30:05.092Z,
+#     updatedAt: 2025-09-11T01:30:05.092Z,
+#     __v: 0
+#   }

@@ -7,6 +7,7 @@ const driverRoutes = require('./routes/driver');
 const jobsRouter = require('./routes/jobs');
 const products = require('./routes/products');
 const buyerReqs = require('./routes/buyerRequests');
+const farmerReqs = require('./routes/farmerRequests');
 const driverReqs = require('./routes/driverRequests');
 const payments = require('./routes/payments');
 const nfc = require('./routes/nfc');
@@ -44,6 +45,7 @@ app.use('/api/drivers', driverRoutes);
 app.use('/api/driver/jobs', jobsRouter);
 
 app.use('/api/products', products);
+app.use('/api/farmer/requests', farmerReqs);
 app.use('/api/buyer/requests', buyerReqs);
 app.use('/api/driver/requests', driverReqs);
 app.use('/api/payments', payments);

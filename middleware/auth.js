@@ -63,19 +63,39 @@ const driverAuth = async (req, res, next) => {
 // Role-based authorization
 const requireRole = (roles) => {
   return (req, res, next) => {
-    if (!req.user) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+   
+    if (!decoded.sub) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token.'
+      });
+    }
+
+    if (!decoded.role) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required.'
       });
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(decoded.role)) {
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions.'
       });
     }
+
+    req.user = decoded;
 
     next();
   };
@@ -87,8 +107,8 @@ const requireAdmin = requireRole(['admin']);
 // Admin or moderator middleware
 const requireAdminOrModerator = requireRole(['admin', 'moderator']);
 const requireDriver = requireRole(['admin', 'moderator', 'driver']);
-const requireFarmer = requireRole(['admin', 'moderator', 'farmer']);
-const requireBuyer = requireRole(['admin', 'moderator', 'buyer']);
+const requireFarmer = requireRole(['farmer']);
+const requireBuyer = requireRole([ 'buyer']);
 const requireDriverOrFarmer = requireRole(['admin', 'moderator', 'driver', 'farmer']);
 const requireDriverOrBuyer = requireRole(['admin', 'moderator', 'driver', 'buyer']);
 const requireFarmerOrBuyer = requireRole(['admin', 'moderator', 'farmer', 'buyer']);
