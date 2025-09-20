@@ -9,7 +9,7 @@ const QuoteSchema = new S({
     currency:{ type: String, default: 'UGX' },
     etaMinutes: { type: Number, required: true },
     note: { type: String },
-    status: { type: String, enum: ['pending', 'accepted', 'rejected', 'withdrawn','active','completed'], default: 'pending' },
+    status: { type: String, enum: ['pending', 'accepted', 'rejected', 'withdrawn','active','picked up','delivered','completed'], default: 'pending' },
 }, { timestamps: true });
 
 

@@ -13,7 +13,7 @@ exports.listJobs = async (req, res) => {
       page = 1 
     } = req.query;
     
-    console.log({ search, status, commodity, sortBy, sortOrder, limit, page });
+    
     
     // Build filter object
     const filter = { farmerId: req.user.sub };

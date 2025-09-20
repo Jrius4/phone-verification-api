@@ -40,8 +40,11 @@ const driverAuth = async (req, res, next) => {
       });
     }
 
-    req.user = driver;
-    req.user.sub = driver._id;
+   
+    req.user = decoded;
+
+    console.log('driver auth',req.user,driver)
+    // req.user.sub = driver._id;
     next();
   } catch (error) {
     console.error('Driver auth middleware error:', error);

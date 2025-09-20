@@ -1,4 +1,6 @@
 const DriverJob4 = require('../models/DriverJob');
+const Quote = require('../models/Quote');
+const DeliveryRequest = require('../models/DeliveryRequest');
 const PaymentIntent3 = require('../models/PaymentIntent');
 const Joi2 = require('joi');
 
@@ -41,12 +43,16 @@ exports.pickupConfirm = async (req, res) => {
         const {code} = await schema.validateAsync(req.body);
         console.log('farmer code',{code});
         const job = await DriverJob4.findById(req.params.id);
+        const quote = await Quote.findById(job);
         if (!job) return res.status(404).json({ message: 'Job not found' });
         if (String(job.accepted_by) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
+
+
         
         if (code !== String(job.farmerCode)) return res.status(400).json({ message: 'Invalid farmer code' });
         const pi = await PaymentIntent3.findOne({ type: 'product', jobId: job.productLotId, status: 'authorized' });
         if (pi) { pi.status = 'released'; await pi.save(); }
+        if(quote){quote.status = 'picked up'; await quote.save()}
         try { req.io?.emit('pickup:confirmed', { jobId: job._id.toString() }); } catch { }
         res.json({ success: true });
     }catch(e){
@@ -61,16 +67,20 @@ exports.deliveryConfirm = async (req, res) => {
      const schema = Joi2.object({code:Joi2.string().required()});
     const {code} = await schema.validateAsync(req.body);
     const job = await DriverJob4.findById(req.params.id);
+    const quote = await Quote.findById(req.params.id);
     if (!job) return res.status(404).json({ message: 'Job not found' });
     if (String(job.accepted_by) !== String(req.user.sub)) return res.status(403).json({ message: 'Forbidden' });
    
     if (code !== String(job.buyerCode)) return res.status(400).json({ message: 'Invalid buyer code' });
     const pi = await PaymentIntent3.findOne({ type: 'transport', jobId: job._id, status: 'authorized' });
     if (pi) { pi.status = 'released'; await pi.save(); }
+    if(quote){quote.status = 'delivered'; await quote.save()}
     job.status = 'completed'; await job.save();
+
     try { req.io?.emit('job:completed', { jobId: job._id.toString() }); } catch { }
     res.json({ success: true });
    }catch(e){
+    console.log({e});
     res.status(500).json({success:false,message:e.message || "Something happened"});
    }
 };

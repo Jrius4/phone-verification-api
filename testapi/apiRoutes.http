@@ -6,7 +6,7 @@ POST http://localhost:3459/api/auth/driver/start
 Content-Type: application/json
 
 {
-  "phoneNumber": "+256700000010"
+  "phoneNumber": "+256700000009"
 }
 
 ### POST /api/auth/driver/verify → { token, role: 'driver', user }
@@ -15,8 +15,8 @@ POST http://localhost:3459/api/auth/driver/verify
 Content-Type: application/json
 
 {
-  "request_id": "68c229ef1af62fa537335ea9",
-   "code": "589254"
+  "request_id": "68ce64630d8a7cebeb95067e",
+   "code": "852096"
 }
 
 ### Farmer Auth
@@ -213,3 +213,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjYxZ
 #     updatedAt: 2025-09-11T01:30:05.092Z,
 #     __v: 0
 #   }
+
+
+# ### 
+# driver token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTEiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTgzNTY2MDUsImV4cCI6MTc2MDk0ODYwNX0.fZlAEvQSx4oM3UQfzPYEZXJaWkq2JG69Ar0K6JnxuvA
+GET http://localhost:3459/api/driver/requests/quotes?status=active&q=
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGMyMjZhMWM3MDZlNDFhNzljODUwMTEiLCJyb2xlIjoiZHJpdmVyIiwic3ViTW9kZWwiOiJEcml2ZXIiLCJpYXQiOjE3NTgzNTY2MDUsImV4cCI6MTc2MDk0ODYwNX0.fZlAEvQSx4oM3UQfzPYEZXJaWkq2JG69Ar0K6JnxuvA
+
